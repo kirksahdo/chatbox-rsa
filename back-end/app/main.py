@@ -1,4 +1,5 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 import models, schemas, auth
@@ -8,6 +9,16 @@ from datetime import timedelta
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+#CORS
+origins = ["*"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 connected_clients = []
 
@@ -58,14 +69,19 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 @app.post("/login/")
 def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.username == user.username).first()
-    
     if not db_user or not auth.verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     
     access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth.create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
     
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "id": db_user.id,
+        "username": db_user.username,
+        "publicKey" : db_user.public_key,
+        "encryptedPrivateKey" : db_user.encrypted_private_key,
+        "token": access_token
+    }
 
 # Envio de mensagens com WebSocket (armazenamento no SQLite)
 @app.post("/messages/")
