@@ -11,6 +11,9 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
+class TokenLogin(BaseModel):
+    token: str
+
 class MessageCreate(BaseModel):
     recipient_id: int
     encrypted_message: str

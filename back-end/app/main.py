@@ -73,7 +73,7 @@ def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     
     access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = auth.create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
+    access_token = auth.create_access_token(data={"id": db_user.id}, expires_delta=access_token_expires)
     
     return {
         "id": db_user.id,
@@ -81,6 +81,22 @@ def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
         "publicKey" : db_user.public_key,
         "encryptedPrivateKey" : db_user.encrypted_private_key,
         "token": access_token
+    }
+
+@app.post("/token/")
+def token(user: schemas.TokenLogin, db: Session = Depends(get_db)):
+
+    user_token = auth.decode_access_token(token=user.token)
+    db_user = db.query(models.User).filter(models.User.id == user_token["id"]).first()
+    if not db_user:
+        raise HTTPException(status_code=400, detail="Invalid user token")
+    
+    return {
+        "id": db_user.id,
+        "username": db_user.username,
+        "publicKey" : db_user.public_key,
+        "encryptedPrivateKey" : db_user.encrypted_private_key,
+        "token": user.token
     }
 
 # Envio de mensagens com WebSocket (armazenamento no SQLite)

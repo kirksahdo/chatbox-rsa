@@ -42,9 +42,9 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
 def decode_access_token(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        id: str = payload.get("id")
+        if id is None:
             raise HTTPException(status_code=401, detail="Could not validate credentials")
-        return {"sub": username}
+        return {"id": id}
     except JWTError:
         raise HTTPException(status_code=401, detail="Could not validate credentials")
