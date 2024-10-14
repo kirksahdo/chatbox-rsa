@@ -1,21 +1,24 @@
 import React, { useState } from "react";
 import AuthController from "../controllers/AuthController";
+import { useToast } from "../hooks/useToast";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
+  const { addToast } = useToast();
+
+  const handleLogin = async () => {
     if (username.trim().length === 0 || username.trim().length === 0) {
       alert("All fields are required");
       return;
     }
 
     try {
-      const result = AuthController.login({ username, password });
+      const result = await AuthController.login({ username, password });
       console.log(result);
-    } catch (err) {
-      console.log(err);
+    } catch (err: any) {
+      addToast(err.response.data.detail, "danger");
     }
   };
 
