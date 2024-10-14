@@ -1,5 +1,4 @@
-import { createContext, ReactNode, useContext, useMemo } from "react";
-import { useLocalStorage } from "./useLocalStorage";
+import { createContext, ReactNode, useContext, useMemo, useState } from "react";
 import { User } from "../interfaces/User";
 import { AuthContextType } from "../@types/auth";
 
@@ -8,14 +7,16 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useLocalStorage("user", null);
+  const [user, setUser] = useState<User | null>(null);
 
   const login = (data: User) => {
     setUser(data);
+    localStorage.setItem("token", data.token);
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem("token");
   };
 
   const value = useMemo(

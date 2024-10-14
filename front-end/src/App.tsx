@@ -3,7 +3,7 @@ import router from "./routes";
 import { AuthProvider } from "./hooks/useAuth";
 import { ToastProvider } from "./hooks/useToast";
 
-function App() {
+const App = () => {
   return (
     <AuthProvider>
       <ToastProvider>
@@ -11,6 +11,6 @@ function App() {
       </ToastProvider>
     </AuthProvider>
   );
-}
+};
 
 export default App;

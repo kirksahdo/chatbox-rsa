@@ -15,10 +15,13 @@ export interface AuthRegister {
 
 export type AuthLogin = Pick<AuthRegister, "username" | "password">;
 
+export type AuthToken = Pick<AuthLoginResponse, "token">;
+
 export interface AuthLoginResponse {
   id: number;
   username: string;
   password: string;
   publicKey: string;
   encryptedPrivateKey: string;
+  token: string;
 }

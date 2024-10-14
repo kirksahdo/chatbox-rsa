@@ -1,26 +1,46 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AuthController from "../controllers/AuthController";
 import { useToast } from "../hooks/useToast";
+import { useAuth } from "../hooks/useAuth";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   const { addToast } = useToast();
+  const { login, logout } = useAuth();
 
   const handleLogin = async () => {
     if (username.trim().length === 0 || username.trim().length === 0) {
       alert("All fields are required");
       return;
     }
-
     try {
       const result = await AuthController.login({ username, password });
-      console.log(result);
+      addToast("Login successful", "success");
+      login(result);
     } catch (err: any) {
       addToast(err.response.data.detail, "danger");
     }
   };
+
+  const handleValidateCredentials = async (token: string) => {
+    try {
+      const result = await AuthController.validateCredentials({ token });
+      login(result);
+      addToast("Credentials validated successfully", "success");
+    } catch (err: any) {
+      logout();
+      addToast(err.response.data.detail, "danger");
+    }
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      handleValidateCredentials(token);
+    }
+  }, []);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600 to-indigo-600 p-4">
