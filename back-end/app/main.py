@@ -132,3 +132,9 @@ def get_messages(recipient_id: int, db: Session = Depends(get_db), token: str = 
         and_(models.Message.recipient_id == db_user_id, models.Message.sender_id == recipient_id))).all()
     
     return messages
+
+@app.get("/users")
+def get_users(name: str = "", db: Session = Depends(get_db), token: str = Depends(auth.decode_access_token)):
+    users = db.query(models.User).filter(and_(models.User.username.contains(name), models.User.id != token["id"])).all()
+
+    return [schemas.UserDTO.model_validate(user) for user in users]

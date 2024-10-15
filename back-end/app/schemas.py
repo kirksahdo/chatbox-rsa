@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
 class UserCreate(BaseModel):
@@ -30,3 +30,10 @@ class MessageResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+class UserDTO(BaseModel):
+    id: int
+    username: str
+    public_key: str
+
+    model_config = ConfigDict(from_attributes=True)
