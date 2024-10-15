@@ -1,7 +1,7 @@
 import { User } from "../interfaces/User";
 
 export interface AuthContextType {
-  user: any;
+  user: User | null;
   login: (data: User) => void;
   logout: () => void;
 }
