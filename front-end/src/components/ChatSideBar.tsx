@@ -51,6 +51,10 @@ const ChatSideBar = () => {
     getChats();
   }, []);
 
+  const handleClickUser = () => {
+    setMode("messages");
+  };
+
   return (
     <div className="w-1/4 bg-white border-r border-gray-300">
       <SideBarHeader />
@@ -68,7 +72,7 @@ const ChatSideBar = () => {
             onChange={(text) => setSearchInput(text)}
             onClick={getUsers}
           />
-          <UsersList users={users} />
+          <UsersList users={users} handleClick={handleClickUser} />
         </>
       )}
       {mode === "messages" && <ChatList chats={chats} />}

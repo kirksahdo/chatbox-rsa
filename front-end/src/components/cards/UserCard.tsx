@@ -1,9 +1,15 @@
 import React from "react";
 import { User } from "../../@types/user";
 
-const UserCard: React.FC<{ user: User }> = ({ user }) => {
+const UserCard: React.FC<{ user: User; onClick: () => void }> = ({
+  user,
+  onClick,
+}) => {
   return (
-    <div className="flex items-center mb-4 cursor-pointer hover:bg-gray-100 p-2 rounded-md">
+    <div
+      className="flex items-center mb-4 cursor-pointer hover:bg-gray-100 p-2 rounded-md"
+      onClick={(_) => onClick()}
+    >
       <div className="w-12 h-12 bg-gray-300 rounded-full mr-3">
         <img
           src="https://placehold.co/200x/ffa8e4/ffffff.svg?text=ʕ•́ᴥ•̀ʔ&font=Lato"

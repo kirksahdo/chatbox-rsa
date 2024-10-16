@@ -25,7 +25,9 @@ const ChatCard: React.FC<{
       <div className="flex-1">
         <h2 className="text-lg font-semibold">{chat.recipient_username}</h2>
         <p className="text-gray-600">
-          {chat.messages.slice(-1)[0].encrypted_message}
+          {chat.messages.length > 0
+            ? chat.messages.slice(-1)[0]?.encrypted_message
+            : ""}
         </p>
       </div>
     </div>
