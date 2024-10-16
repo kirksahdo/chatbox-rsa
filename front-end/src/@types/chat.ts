@@ -20,7 +20,7 @@ export interface ChatContextType {
     message: string,
     sender_id: number,
     recipient_id: number,
-  ) => void;
+  ) => Promise<void>;
 }
 
 export interface CurrentChatContextType {
