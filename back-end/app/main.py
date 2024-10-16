@@ -172,3 +172,12 @@ def get_users(name: str = "", db: Session = Depends(get_db), token: str = Depend
     users = db.query(models.User).filter(and_(models.User.username.contains(name), models.User.id != token["id"])).all()
 
     return [schemas.UserDTO.model_validate(user) for user in users]
+
+@app.get("/user/{id}")
+def get_users(id: int, db: Session = Depends(get_db), token: str = Depends(auth.decode_access_token)):
+    user = db.query(models.User).filter(models.User.id == id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return schemas.UserDTO.model_validate(user)
