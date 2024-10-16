@@ -7,3 +7,7 @@ export interface User {
 export interface GetUsers {
   name?: string;
 }
+
+export interface GetUser {
+  id: number;
+}
