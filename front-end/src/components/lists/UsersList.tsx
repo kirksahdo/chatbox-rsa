@@ -8,8 +8,7 @@ const UsersList: React.FC<{ users: User[] }> = ({ users }) => {
         users.map((user, i) => <UserCard user={user} key={i} />)
       ) : (
         <h3 className="w-full text-gray-500 text-center">
-          {" "}
-          {"Users with name not found."}{" "}
+          {"Users with name not found."}
         </h3>
       )}
     </div>
