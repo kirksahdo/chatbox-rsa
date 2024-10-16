@@ -1,10 +1,12 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException
+from fastapi import FastAPI, WebSocket, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 import models, schemas, auth
 from database import engine, get_db
 from datetime import timedelta
+from collections import defaultdict
+
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -24,7 +26,8 @@ connected_clients = []
 
 # WebSocket para comunicação em tempo real
 @app.websocket("/ws/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: int):
+async def websocket_endpoint(websocket: WebSocket, user_id: int, token = str):
+    _ = auth.decode_access_token(token)
     await websocket.accept()
     print("Accepted websocket connection")
     connected_clients.append({"user_id": user_id, "socket": websocket})
@@ -37,6 +40,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
         print(f"Erro: {e}")
     finally:
         connected_clients.remove({"user_id": user_id, "socket": websocket})
+        print("Remove client")
 
 async def send_message_to_user(user_id: int, sender_id: int, message: str):
     for client in connected_clients:
@@ -102,7 +106,7 @@ def token(user: schemas.TokenLogin, db: Session = Depends(get_db)):
 # Envio de mensagens com WebSocket (armazenamento no SQLite)
 @app.post("/messages/")
 async def send_message(message: schemas.MessageCreate, db: Session = Depends(get_db), token: str = Depends(auth.decode_access_token)):
-    db_user = db.query(models.User).filter(models.User.username == token['sub']).first()
+    db_user = db.query(models.User).filter(models.User.id == token['id']).first()
     
     recipient = db.query(models.User).filter(models.User.id == message.recipient_id).first()
     
@@ -125,13 +129,43 @@ async def send_message(message: schemas.MessageCreate, db: Session = Depends(get
 # Obter mensagens recebidas
 @app.get("/messages/{recipient_id}")
 def get_messages(recipient_id: int, db: Session = Depends(get_db), token: str = Depends(auth.decode_access_token)):
-    db_user_id = db.query(models.User).filter(models.User.username == token['sub']).first().id
+    db_user_id = token['id']
     
     messages = db.query(models.Message).filter(or_
         (and_(models.Message.recipient_id == recipient_id, models.Message.sender_id == db_user_id),
         and_(models.Message.recipient_id == db_user_id, models.Message.sender_id == recipient_id))).all()
     
     return messages
+
+# Obter mensagens recebidas
+@app.get("/chats")
+def get_messages(db: Session = Depends(get_db), token: str = Depends(auth.decode_access_token)):
+    sender_id = token['id']
+    
+    messages = db.query(models.Message).filter(
+        or_(models.Message.sender_id == sender_id, models.Message.recipient_id == sender_id)
+    ).all()
+
+    chats_dict = defaultdict(lambda: {"messages": []})
+
+    for message in messages:
+        recipient_id = message.recipient_id if message.recipient_id != sender_id else message.sender_id
+        chats_dict[recipient_id]["messages"].append(schemas.MessageDTO.model_validate(message))
+
+    user_ids = list(chats_dict.keys())
+    recipients = db.query(models.User).filter(models.User.id.in_(user_ids)).all()
+
+    chats = [
+        schemas.ChatDTO(
+            recipient_id=user.id,
+            recipient_username=user.username,
+            recipient_public_key=user.public_key,
+            messages=chats_dict[user.id]["messages"]
+        )
+        for user in recipients
+    ]
+
+    return chats
 
 @app.get("/users")
 def get_users(name: str = "", db: Session = Depends(get_db), token: str = Depends(auth.decode_access_token)):
