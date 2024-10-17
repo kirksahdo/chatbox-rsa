@@ -2,6 +2,7 @@ from fastapi import FastAPI, WebSocket, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
+from sqlalchemy.exc import IntegrityError
 import models, schemas, auth
 from database import engine, get_db
 from datetime import timedelta
@@ -62,10 +63,13 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
         public_key=user.public_key,
         encrypted_private_key=user.encrypted_private_key
     )
+    try:
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+    except IntegrityError as e:
+        raise HTTPException(status_code=400, detail="This username is already in use")
     
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
     
     return {"msg": "User registered successfully"}
 
