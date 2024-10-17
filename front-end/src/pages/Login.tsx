@@ -2,25 +2,37 @@ import React, { useEffect, useState } from "react";
 import AuthController from "../controllers/AuthController";
 import { useToast } from "../hooks/useToast";
 import { useAuth } from "../hooks/useAuth";
+import { useLoading } from "../hooks/useLoading";
 
 const Login = () => {
+  // States
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
+  // Hooks
   const { addToast } = useToast();
   const { login, logout } = useAuth();
+  const { setIsLoading } = useLoading();
 
   const handleLogin = async () => {
     if (username.trim().length === 0 || username.trim().length === 0) {
-      alert("All fields are required");
+      addToast("All fields are required", "danger");
       return;
     }
     try {
+      setIsLoading(true);
+
       const result = await AuthController.login({ username, password });
       addToast("Login successful", "success");
       login(result);
     } catch (err: any) {
-      addToast(err.response.data.detail, "danger");
+      addToast(
+        err.response.data.detail ??
+          "Login error, contact some system administrator.",
+        "danger",
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -31,7 +43,11 @@ const Login = () => {
       addToast("Credentials validated successfully", "success");
     } catch (err: any) {
       logout();
-      addToast(err.response.data.detail, "danger");
+      addToast(
+        err.response.data.detail ??
+          "Login error, contact some system administrator.",
+        "danger",
+      );
     }
   };
 

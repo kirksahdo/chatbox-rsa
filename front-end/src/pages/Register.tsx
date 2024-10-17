@@ -1,39 +1,54 @@
 import React, { useState } from "react";
 import AuthController from "../controllers/AuthController";
 import { encryptPrivateKey, generateKeyPair } from "../utils/crypto";
+import { useLoading } from "../hooks/useLoading";
+import { useToast } from "../hooks/useToast";
+import { useNavigate } from "react-router-dom";
 
 const Register: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  // Hooks
+  const { setIsLoading } = useLoading();
+  const { addToast } = useToast();
+  const navigate = useNavigate();
+
   const handleRegister = () => {
     if (username.trim().length === 0) {
-      alert("The username is required");
+      addToast("The username is required", "danger");
       return;
     }
     if (password !== confirmPassword) {
-      alert("As senhas não coincidem");
+      addToast("The passwords does'nt match", "danger");
       return;
     }
     registerUser();
   };
 
   const registerUser = async () => {
+    setIsLoading(true);
     try {
       const { publicKey, privateKey } = generateKeyPair();
       const encriptedPrivateKey = encryptPrivateKey(privateKey, password);
 
-      const result = await AuthController.register({
+      await AuthController.register({
         username,
         encrypted_private_key: encriptedPrivateKey,
         password: password,
         public_key: publicKey,
       });
 
-      console.log(result);
-    } catch (error) {
-      console.error(error);
+      addToast("User registered successfully", "success");
+      navigate("/login");
+    } catch (error: any) {
+      addToast(
+        error.response.data.detail ?? "Error registering user",
+        "danger",
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -83,7 +98,7 @@ const Register: React.FC = () => {
 
         <div className="mt-6">
           <button
-            className="w-full  bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-900 transition duration-200"
+            className="bg-purple-500 w-full hover:bg-purple-900 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 ease-in-out transform hover:scale-105"
             onClick={handleRegister}
           >
             Registrar
