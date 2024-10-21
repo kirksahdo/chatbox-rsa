@@ -50,7 +50,6 @@ async def send_message_to_user(user_id: int, sender_id: int, message: str):
                 "sender_id": sender_id,
                 "message": message
             })
-            break
 
 # Cadastro de usuário
 @app.post("/register/")
