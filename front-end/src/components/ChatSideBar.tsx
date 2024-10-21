@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useToast } from "../hooks/useToast";
 import SearchInput from "./inputs/SearchInput";
 import UsersList from "./lists/UsersList";
@@ -9,10 +9,12 @@ import ChatController from "../controllers/ChatController";
 import ChatList from "./lists/ChatList";
 import { User } from "../@types/user";
 import { useChat } from "../hooks/useChats";
+import { useAuth } from "../hooks/useAuth";
 
 const ChatSideBar = () => {
   const [searchInput, setSearchInput] = useState("");
   const { addToast } = useToast();
+  const { user } = useAuth();
 
   const [mode, setMode] = useState<"messages" | "search">("messages");
 
@@ -34,14 +36,11 @@ const ChatSideBar = () => {
   }, [mode]);
 
   // Chat List
-  const { chats, setChats } = useChat();
+  const { chats, changeChats } = useChat();
   const getChats = async () => {
     try {
       const result = await ChatController.get();
-      setChats([...result]);
-      console.log(chats);
-      console.log(result);
-      addToast("Chats fetched successfully", "success");
+      changeChats([...result]);
     } catch (err: any) {
       addToast(err.message, "danger");
     }
@@ -49,7 +48,7 @@ const ChatSideBar = () => {
 
   useEffect(() => {
     getChats();
-  }, []);
+  }, [user]);
 
   const handleClickUser = () => {
     setMode("messages");
