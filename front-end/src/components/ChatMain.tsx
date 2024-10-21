@@ -19,8 +19,9 @@ const ChatMain = () => {
   useEffect(() => {
     if (currentChat) {
       scrollToBottom();
+      console.log("scrollToBottom");
     }
-  }, [currentChat]);
+  }, [currentChat, currentChat?.messages.length]);
 
   const scrollToBottom = () => {
     if (messagesDivRef.current) {
@@ -43,8 +44,9 @@ const ChatMain = () => {
           encrypted_message: message,
           recipient_id: currentChat.recipient_id,
         });
-        addMessage(message, user!.id, currentChat.recipient_id);
+        await addMessage(message, user!.id, currentChat.recipient_id);
         addToast("Message sent!", "success");
+        scrollToBottom();
         setMessage("");
       }
     } catch (error: any) {
