@@ -1,6 +1,7 @@
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -10,83 +11,106 @@ import { Chat, ChatContextType } from "../@types/chat";
 import { useAuth } from "./useAuth";
 import { useCurrentChat } from "./useCurrentChat";
 import UserController from "../controllers/UserController";
+import { useToast } from "./useToast";
 
 const ChatContext = createContext<ChatContextType | null>(null);
 
 export const ChatProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  // Chats
   const [chats, setChats] = useState<Chat[]>([]);
-  const { currentChat, setCurrentChat } = useCurrentChat();
+  const chatsRef = useRef(chats); // Ref
+
+  // Current Chat Context
+  const { currentChat, changeCurrentChat } = useCurrentChat();
+  const currentChatRef = useRef(currentChat);
+
+  // WebSocket Connection Ref
   const connection = useRef<WebSocket | null>(null);
 
   const { user } = useAuth();
+  const { addToast } = useToast();
 
-  const addMessage = async (
-    message: string,
-    sender_id: number,
-    recipient_id: number,
-  ) => {
-    const newChats = [...chats];
-    for (let i = 0; newChats.length; i++) {
-      if (
-        newChats[i].recipient_id === recipient_id ||
-        newChats[i].recipient_id === sender_id
-      ) {
-        newChats[i].messages.push({
-          id: newChats[i].messages.length + 1,
-          recipient_id: recipient_id,
-          sender_id: sender_id,
-          encrypted_message: message,
-          timestamp: new Date(),
-        });
+  // Atualiza o valor do ref sempre que `chats` mudar
+  useEffect(() => {
+    chatsRef.current = chats;
+  }, [chats]);
+
+  // Atualiza o valor do ref sempre que `currentChat` mudar
+  useEffect(() => {
+    currentChatRef.current = currentChat;
+  }, [currentChat]);
+
+  const addNewChat = useCallback(
+    async (message: string, sender_id: number, recipient_id: number) => {
+      const newChats = [...chatsRef.current];
+      const sender = await UserController.getUser({
+        id: sender_id !== user!.id ? sender_id : recipient_id,
+      });
+
+      const newChat: Chat = {
+        recipient_id: sender.id,
+        recipient_public_key: sender.publicKey,
+        recipient_username: sender.username,
+        messages: [
+          {
+            id: 0,
+            recipient_id: recipient_id,
+            sender_id: sender_id,
+            encrypted_message: message,
+            timestamp: new Date(),
+          },
+        ],
+      };
+      setChats([...newChats, newChat]);
+      addToast(message, "notification", sender.username);
+    },
+    [addToast, user],
+  );
+
+  const addMessage = useCallback(
+    async (message: string, sender_id: number, recipient_id: number) => {
+      const newChats = [...chatsRef.current];
+      for (let i = 0; newChats.length; i++) {
         if (
-          currentChat?.recipient_id === sender_id ||
-          currentChat?.recipient_id === recipient_id
+          newChats[i].recipient_id === recipient_id ||
+          newChats[i].recipient_id === sender_id
         ) {
-          setCurrentChat({ ...newChats[i] });
+          newChats[i].messages.push({
+            id: newChats[i].messages.length + 1,
+            recipient_id: recipient_id,
+            sender_id: sender_id,
+            encrypted_message: message,
+            timestamp: new Date(),
+          });
+          if (
+            currentChatRef.current?.recipient_id === sender_id ||
+            currentChatRef.current?.recipient_id === recipient_id
+          ) {
+            changeCurrentChat(newChats[i]);
+          } else {
+            addToast(message, "notification", newChats[i].recipient_username);
+          }
+          setChats([...newChats]);
+          return;
         }
-        setChats([...newChats]);
-        return;
       }
-    }
-    try {
-      await addNewChat(message, sender_id, recipient_id);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const addNewChat = async (
-    message: string,
-    sender_id: number,
-    recipient_id: number,
-  ) => {
-    const newChats = [...chats];
-    const sender = await UserController.getUser({
-      id: sender_id !== user!.id ? sender_id : recipient_id,
-    });
-
-    const newChat: Chat = {
-      recipient_id: sender.id,
-      recipient_public_key: sender.publicKey,
-      recipient_username: sender.username,
-      messages: [
-        {
-          id: 0,
-          recipient_id: recipient_id,
-          sender_id: sender_id,
-          encrypted_message: message,
-          timestamp: new Date(),
-        },
-      ],
-    };
-    setChats([...newChats, newChat]);
-  };
+      try {
+        await addNewChat(message, sender_id, recipient_id);
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    [addNewChat, addToast],
+  );
 
   useEffect(() => {
+    if (!user) return;
+
+    const uniqueParam = Date.now(); // Gera um timestamp único
     const socket = new WebSocket(
-      `ws://127.0.0.1:3333/ws/${user!.id}?token=${user!.token}`,
+      `ws://127.0.0.1:3333/ws/${user.id}?token=${user.token}&t=${uniqueParam}`,
     );
 
     socket.onopen = () => console.log("WebSocket connection established");
@@ -96,17 +120,37 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
         sender_id: number;
         message: string;
       } = JSON.parse(event.data);
+      console.log("message:", message);
       addMessage(message.message, message.sender_id, user!.id);
     };
     connection.current = socket;
+  }, [user]);
+
+  const changeChats = (chats: Chat[]) => {
+    setChats([...chats]);
+  };
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (connection.current) {
+        console.log("Fechando WebSocket antes de sair.");
+        connection.current.close();
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
-      socket.close();
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
+  }, []);
+
+  useEffect(() => {
+    console.log(chats);
   }, [chats]);
 
   return (
-    <ChatContext.Provider value={{ chats, setChats, addMessage }}>
+    <ChatContext.Provider value={{ chats, changeChats, addMessage }}>
       {children}
     </ChatContext.Provider>
   );

@@ -7,9 +7,10 @@ export const CurrentChatProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [currentChat, setCurrentChat] = useState<Chat>();
-
   return (
-    <CurrentChatContext.Provider value={{ currentChat, setCurrentChat }}>
+    <CurrentChatContext.Provider
+      value={{ changeCurrentChat: setCurrentChat, currentChat }}
+    >
       {children}
     </CurrentChatContext.Provider>
   );
