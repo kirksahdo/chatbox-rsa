@@ -4,7 +4,7 @@ import clsx from "clsx";
 
 const ChatCard: React.FC<{
   chat: Chat;
-  onClick: () => void;
+  onClick: (selected?: boolean) => void;
   selected?: boolean;
 }> = ({ chat, onClick, selected }) => {
   return (
@@ -13,7 +13,7 @@ const ChatCard: React.FC<{
         "flex items-center mb-4 cursor-pointer hover:bg-gray-100 p-2 rounded-md",
         selected && "bg-gray-100",
       )}
-      onClick={(_) => onClick()}
+      onClick={(_) => onClick(selected)}
     >
       <div className="w-12 h-12 bg-gray-300 rounded-full mr-3">
         <img

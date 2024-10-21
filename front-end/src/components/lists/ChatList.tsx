@@ -1,17 +1,21 @@
+import { useCallback } from "react";
 import { Chat } from "../../@types/chat";
 import { useCurrentChat } from "../../hooks/useCurrentChat";
 import ChatCard from "../cards/ChatCard";
 
 const ChatList: React.FC<{ chats: Chat[] }> = ({ chats }) => {
-  const { currentChat, setCurrentChat } = useCurrentChat();
+  const { currentChat, changeCurrentChat } = useCurrentChat();
 
-  const handleClick = (index: number) => {
-    if (currentChat === chats[index]) {
-      setCurrentChat(undefined);
-      return;
-    }
-    setCurrentChat(chats[index]);
-  };
+  const handleClick = useCallback(
+    (index: number, selected?: boolean) => {
+      if (currentChat === chats[index] && selected) {
+        changeCurrentChat(undefined);
+        return;
+      }
+      changeCurrentChat(chats[index]);
+    },
+    [chats, currentChat],
+  );
 
   return (
     <div className="overflow-y-auto h-screen p-3 mb-9 pb-20">
@@ -20,7 +24,7 @@ const ChatList: React.FC<{ chats: Chat[] }> = ({ chats }) => {
           <ChatCard
             chat={chat}
             key={i}
-            onClick={() => handleClick(i)}
+            onClick={(selected) => handleClick(i, selected)}
             selected={currentChat === chat}
           />
         ))
