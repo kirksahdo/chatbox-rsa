@@ -15,7 +15,7 @@ export interface Message {
 
 export interface ChatContextType {
   chats: Chat[];
-  setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
+  changeChats: (chats: Chat[]) => void;
   addMessage: (
     message: string,
     sender_id: number,
@@ -25,7 +25,7 @@ export interface ChatContextType {
 
 export interface CurrentChatContextType {
   currentChat: Chat | undefined;
-  setCurrentChat: React.Dispatch<React.SetStateAction<Chat | undefined>>;
+  changeCurrentChat: (chat: Chat | undefined) => void;
 }
 
 export interface MessageRegister {

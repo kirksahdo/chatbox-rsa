@@ -1,12 +1,13 @@
-export type ToastType = "success" | "danger";
+export type ToastType = "success" | "danger" | "notification";
 
 export interface ToastProps {
   message: string;
+  author?: string;
   type: ToastType;
   onClose: () => void;
   duration?: number;
 }
 
 export interface ToastContextType {
-  addToast: (message: string, type: ToastType) => void;
+  addToast: (message: string, type: ToastType, author?: string) => void;
 }
