@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { Chat } from "../../@types/chat";
 import { User } from "../../@types/user";
 import { useChat } from "../../hooks/useChats";
@@ -8,29 +9,35 @@ const UsersList: React.FC<{ users: User[]; handleClick: () => void }> = ({
   users,
   handleClick,
 }) => {
-  const { chats, setChats } = useChat();
-  const { setCurrentChat } = useCurrentChat();
+  const { chats, changeChats } = useChat();
+  const { changeCurrentChat } = useCurrentChat();
 
-  const handleClickCard = (user: User) => {
-    const chat = chats.find((chat) => chat.recipient_id === user.id);
-    if (chat) {
-      setCurrentChat(chat);
-    } else {
-      addNewChat(user);
-    }
-    handleClick();
-  };
+  const addNewChat = useCallback(
+    (user: User) => {
+      const newChat: Chat = {
+        recipient_id: user.id,
+        recipient_public_key: user.publicKey,
+        recipient_username: user.username,
+        messages: [],
+      };
+      changeChats([...chats, newChat]);
+      changeCurrentChat(newChat);
+    },
+    [chats],
+  );
 
-  const addNewChat = (user: User) => {
-    const newChat: Chat = {
-      recipient_id: user.id,
-      recipient_public_key: user.publicKey,
-      recipient_username: user.username,
-      messages: [],
-    };
-    setChats([...chats, newChat]);
-    setCurrentChat(newChat);
-  };
+  const handleClickCard = useCallback(
+    (user: User) => {
+      const chat = chats.find((chat) => chat.recipient_id === user.id);
+      if (chat) {
+        changeCurrentChat(chat);
+      } else {
+        addNewChat(user);
+      }
+      handleClick();
+    },
+    [chats],
+  );
 
   return (
     <div className="overflow-y-auto h-screen p-3 mb-9 pb-20">
