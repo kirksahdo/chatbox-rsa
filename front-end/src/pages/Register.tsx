@@ -4,6 +4,7 @@ import { encryptPrivateKey, generateKeyPair } from "../utils/crypto";
 import { useLoading } from "../hooks/useLoading";
 import { useToast } from "../hooks/useToast";
 import { useNavigate } from "react-router-dom";
+import ImageInput from "../components/inputs/ImageInput";
 
 const Register: React.FC = () => {
   const [username, setUsername] = useState("");
@@ -52,6 +53,38 @@ const Register: React.FC = () => {
     }
   };
 
+  // Input File State
+  const [dataUri, setDataUri] = useState("");
+  const [image, setImage] = useState("");
+
+  // Input File Functions
+
+  const fileToDataUri = (file: File) => {
+    return new Promise<string | ArrayBuffer | null | undefined>(
+      (resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event: ProgressEvent<FileReader>) => {
+          resolve(event.target?.result);
+        };
+        reader.readAsDataURL(file);
+      },
+    );
+  };
+
+  const onChangeFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setImage(e.target.value);
+    const file = e.target.files ? e.target.files[0] : null;
+
+    if (!file) {
+      setDataUri("");
+      return;
+    }
+
+    fileToDataUri(file).then((dataUri) => {
+      setDataUri(dataUri?.toString() || "");
+    });
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-indigo-600 p-4">
       <div className="bg-white shadow-lg rounded-lg p-8 max-w-md w-full">
@@ -69,6 +102,14 @@ const Register: React.FC = () => {
             placeholder="Nome de Usuário"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+
+        <div className="mt-4 w-full">
+          <ImageInput
+            label="Profile Image"
+            onChange={onChangeFileInput}
+            value={image}
           />
         </div>
 
