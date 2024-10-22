@@ -36,7 +36,7 @@ export const encryptMessage = (message: string, publicKey: string) => {
   const crypt = new JSEncrypt();
   crypt.setPublicKey(publicKey);
   const encrypted = crypt.encrypt(message);
-  return encrypted;
+  return encrypted ? encrypted : message;
 };
 
 // Função para descriptografar mensagens com a chave privada
@@ -47,5 +47,5 @@ export const decryptMessage = (
   const crypt = new JSEncrypt();
   crypt.setPrivateKey(privateKey);
   const decrypted = crypt.decrypt(encryptedMessage);
-  return decrypted;
+  return decrypted ? decrypted : encryptedMessage;
 };
