@@ -22,9 +22,9 @@ const ChatCard: React.FC<{
           className="w-12 h-12 rounded-full"
         />
       </div>
-      <div className="flex-1">
+      <div className="w-full">
         <h2 className="text-lg font-semibold">{chat.recipient_username}</h2>
-        <p className="text-gray-600">
+        <p className="text-gray-600 truncate w-full max-w-full">
           {chat.messages.length > 0
             ? chat.messages.slice(-1)[0]?.encrypted_message
             : ""}
