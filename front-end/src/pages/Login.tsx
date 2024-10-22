@@ -3,6 +3,7 @@ import AuthController from "../controllers/AuthController";
 import { useToast } from "../hooks/useToast";
 import { useAuth } from "../hooks/useAuth";
 import { useLoading } from "../hooks/useLoading";
+import { decryptPrivateKey, encryptPrivateKey } from "../utils/crypto";
 
 const Login = () => {
   // States
@@ -23,8 +24,15 @@ const Login = () => {
       setIsLoading(true);
 
       const result = await AuthController.login({ username, password });
+      const user = {
+        ...result,
+        encryptedPrivateKey: decryptPrivateKey(
+          result.encryptedPrivateKey,
+          password,
+        ),
+      };
       addToast("Login successful", "success");
-      login(result);
+      login(user);
     } catch (err: any) {
       addToast(
         err.response.data.detail ??
@@ -39,15 +47,19 @@ const Login = () => {
   const handleValidateCredentials = async (token: string) => {
     try {
       const result = await AuthController.validateCredentials({ token });
-      login(result);
+      const privateKey = localStorage.getItem("privateKey");
+
+      if (!privateKey) throw new Error();
+
+      const user = {
+        ...result,
+        encryptedPrivateKey: privateKey,
+      };
+      login(user);
       addToast("Credentials validated successfully", "success");
     } catch (err: any) {
       logout();
-      addToast(
-        err.response.data.detail ??
-          "Login error, contact some system administrator.",
-        "danger",
-      );
+      addToast(err?.response?.data?.detail ?? err, "danger");
     }
   };
 
