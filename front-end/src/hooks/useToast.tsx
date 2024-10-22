@@ -1,9 +1,9 @@
 import {
   createContext,
   ReactNode,
-  useCallback,
   useContext,
-  useMemo,
+  useEffect,
+  useRef,
   useState,
 } from "react";
 import { ToastContextType, ToastProps, ToastType } from "../@types/toast";
@@ -16,35 +16,30 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [toasts, setToasts] = useState<ToastProps[]>([]);
+  const toastsRef = useRef(toasts);
 
-  const addToast = useCallback(
-    (message: string, type: ToastType, author?: string) => {
-      const toast: ToastProps = {
-        message,
-        type,
-        author,
-        onClose: () => {
-          setToasts([...toasts.filter((t) => toast !== t)]);
-        },
-      };
-      setToasts([toast, ...toasts]);
+  const addToast = (message: string, type: ToastType, author?: string) => {
+    const toast: ToastProps = {
+      message,
+      type,
+      author,
+      onClose: () => {
+        setToasts([...toastsRef.current.filter((t) => toast !== t)]);
+      },
+    };
+    setToasts([toast, ...toastsRef.current]);
 
-      setTimeout(() => {
-        if (!toasts.some((t) => toast === t)) toast.onClose();
-      }, toast.duration ?? 4000);
-    },
-    [toasts],
-  );
+    setTimeout(() => {
+      if (!toasts.some((t) => toast === t)) toast.onClose();
+    }, toast.duration ?? 4000);
+  };
 
-  const value = useMemo(
-    () => ({
-      addToast,
-    }),
-    [addToast],
-  );
+  useEffect(() => {
+    toastsRef.current = toasts;
+  }, [toasts]);
 
   return (
-    <ToastContext.Provider value={value}>
+    <ToastContext.Provider value={{ addToast }}>
       {children}
       <div className="fixed top-4 right-4 space-y-3 z-50">
         {toasts.map((t, i) =>
