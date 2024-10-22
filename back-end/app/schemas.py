@@ -33,6 +33,7 @@ class TokenLogin(BaseModel):
 class MessageCreate(BaseModel):
     recipient_id: int
     encrypted_message: str
+    sender_encrypted_message: str
 
 class WebSocketMessage(BaseModel):
     message: str  # Mensagem do WebSocket
@@ -43,6 +44,7 @@ class MessageDTO(BaseModel):
     recipient_id: int
     sender_id: int
     encrypted_message: str
+    sender_encrypted_message: str
     timestamp: datetime
 
     model_config = ConfigDict(from_attributes=True)

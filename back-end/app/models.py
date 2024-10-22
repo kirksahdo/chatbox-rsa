@@ -23,7 +23,8 @@ class Message(Base):
     id = Column(Integer, primary_key=True, index=True)
     sender_id = Column(Integer, ForeignKey("users.id"))
     recipient_id = Column(Integer, ForeignKey("users.id"))
-    encrypted_message = Column(String) 
+    encrypted_message = Column(String)
+    sender_encrypted_message = Column(String) 
     timestamp = Column(DateTime, default=datetime.utcnow) 
     
     

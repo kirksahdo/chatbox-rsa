@@ -43,12 +43,13 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int, token = str):
         connected_clients.remove({"user_id": user_id, "socket": websocket})
         print("Remove client")
 
-async def send_message_to_user(user_id: int, sender_id: int, message: str):
+async def send_message_to_user(user_id: int, sender_id: int, message: str, sender_message):
     for client in connected_clients:
         if client["user_id"] == user_id:
             await client["socket"].send_json({
                 "sender_id": sender_id,
-                "message": message
+                "message": message,
+                "sender_message": sender_message
             })
 
 # Cadastro de usuário
@@ -119,13 +120,14 @@ async def send_message(message: schemas.MessageCreate, db: Session = Depends(get
     new_message = models.Message(
         sender_id=db_user.id,
         recipient_id=message.recipient_id,
-        encrypted_message=message.encrypted_message
+        encrypted_message=message.encrypted_message,
+        sender_encrypted_message = message.sender_encrypted_message
     )
     
     db.add(new_message)
     db.commit()
 
-    await send_message_to_user(message.recipient_id, db_user.id, message.encrypted_message)
+    await send_message_to_user(message.recipient_id, db_user.id, message.encrypted_message, message.sender_encrypted_message)
     
     return {"msg": "Message sent"}
 
