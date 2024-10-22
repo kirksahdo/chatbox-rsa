@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useMemo, useState } from "react";
+import { createContext, ReactNode, useContext, useState } from "react";
 import { User } from "../interfaces/User";
 import { AuthContextType } from "../@types/auth";
 
@@ -12,11 +12,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const login = (data: User) => {
     setUser(data);
     localStorage.setItem("token", data.token);
+    localStorage.setItem("privateKey", data.encryptedPrivateKey);
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem("token");
+    localStorage.removeItem("privateKey");
   };
 
   return (

@@ -12,6 +12,7 @@ import { useAuth } from "./useAuth";
 import { useCurrentChat } from "./useCurrentChat";
 import UserController from "../controllers/UserController";
 import { useToast } from "./useToast";
+import { decryptMessage } from "../utils/crypto";
 
 const ChatContext = createContext<ChatContextType | null>(null);
 
@@ -59,6 +60,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
             recipient_id: recipient_id,
             sender_id: sender_id,
             encrypted_message: message,
+            sender_encrypted_message: message,
             timestamp: new Date(),
           },
         ],
@@ -70,39 +72,58 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const addMessage = useCallback(
-    async (message: string, sender_id: number, recipient_id: number) => {
-      const newChats = [...chatsRef.current];
-      for (let i = 0; newChats.length; i++) {
-        if (
-          newChats[i].recipient_id === recipient_id ||
-          newChats[i].recipient_id === sender_id
-        ) {
-          newChats[i].messages.push({
-            id: newChats[i].messages.length + 1,
-            recipient_id: recipient_id,
-            sender_id: sender_id,
-            encrypted_message: message,
-            timestamp: new Date(),
-          });
-          if (
-            currentChatRef.current?.recipient_id === sender_id ||
-            currentChatRef.current?.recipient_id === recipient_id
-          ) {
-            changeCurrentChat(newChats[i]);
-          } else {
-            addToast(message, "notification", newChats[i].recipient_username);
-          }
-          setChats([...newChats]);
-          return;
-        }
-      }
+    async (
+      message: string,
+      sender_message: string,
+      sender_id: number,
+      recipient_id: number,
+    ) => {
       try {
-        await addNewChat(message, sender_id, recipient_id);
+        const sender = await UserController.getUser({
+          id: sender_id !== user!.id ? sender_id : recipient_id,
+        });
+        const newChats = [...chatsRef.current];
+
+        const decryptedMessage =
+          recipient_id === user!.id
+            ? decryptMessage(message, user!.encryptedPrivateKey)
+            : decryptMessage(sender_message, user!.encryptedPrivateKey);
+
+        for (let i = 0; newChats.length; i++) {
+          if (
+            newChats[i].recipient_id === recipient_id ||
+            newChats[i].recipient_id === sender.id
+          ) {
+            newChats[i].messages.push({
+              id: newChats[i].messages.length + 1,
+              recipient_id: recipient_id,
+              sender_id: sender_id,
+              encrypted_message: decryptedMessage,
+              sender_encrypted_message: decryptedMessage,
+              timestamp: new Date(),
+            });
+            if (
+              currentChatRef.current?.recipient_id === sender_id ||
+              currentChatRef.current?.recipient_id === recipient_id
+            ) {
+              changeCurrentChat(newChats[i]);
+            } else {
+              addToast(
+                decryptedMessage,
+                "notification",
+                newChats[i].recipient_username,
+              );
+            }
+            setChats([...newChats]);
+            return;
+          }
+        }
+        await addNewChat(decryptedMessage, sender_id, recipient_id);
       } catch (err) {
         console.error(err);
       }
     },
-    [addNewChat, addToast],
+    [user],
   );
 
   useEffect(() => {
@@ -119,9 +140,15 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
       const message: {
         sender_id: number;
         message: string;
+        sender_message: string;
       } = JSON.parse(event.data);
       console.log("message:", message);
-      addMessage(message.message, message.sender_id, user!.id);
+      addMessage(
+        message.message,
+        message.sender_message,
+        message.sender_id,
+        user!.id,
+      );
     };
     connection.current = socket;
   }, [user]);

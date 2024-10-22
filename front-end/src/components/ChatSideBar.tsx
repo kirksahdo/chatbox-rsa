@@ -10,6 +10,7 @@ import ChatList from "./lists/ChatList";
 import { User } from "../@types/user";
 import { useChat } from "../hooks/useChats";
 import { useAuth } from "../hooks/useAuth";
+import { decryptMessage } from "../utils/crypto";
 
 const ChatSideBar = () => {
   const [searchInput, setSearchInput] = useState("");
@@ -40,7 +41,23 @@ const ChatSideBar = () => {
   const getChats = async () => {
     try {
       const result = await ChatController.get();
-      changeChats([...result]);
+      const chats = result.map((chat) => ({
+        ...chat,
+        messages: chat.messages.map((message) => {
+          const msg =
+            user!.id === message.recipient_id
+              ? decryptMessage(
+                  message.encrypted_message,
+                  user!.encryptedPrivateKey,
+                )
+              : decryptMessage(
+                  message.sender_encrypted_message,
+                  user!.encryptedPrivateKey,
+                );
+          return { ...message, encrypted_message: msg };
+        }),
+      }));
+      changeChats([...chats]);
     } catch (err: any) {
       addToast(err.message, "danger");
     }

@@ -10,6 +10,7 @@ export interface Message {
   recipient_id: number;
   sender_id: number;
   encrypted_message: string;
+  sender_encrypted_message: string;
   timestamp: Date;
 }
 
@@ -18,6 +19,7 @@ export interface ChatContextType {
   changeChats: (chats: Chat[]) => void;
   addMessage: (
     message: string,
+    sender_message: string,
     sender_id: number,
     recipient_id: number,
   ) => Promise<void>;
@@ -30,5 +32,6 @@ export interface CurrentChatContextType {
 
 export interface MessageRegister {
   recipient_id: number;
+  sender_encrypted_message: string;
   encrypted_message: string;
 }
