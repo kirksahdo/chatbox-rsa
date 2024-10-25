@@ -21,8 +21,16 @@ const Register: React.FC = () => {
       addToast("The username is required", "danger");
       return;
     }
+    if (username.indexOf(" ") >= 0) {
+      addToast("The username can't have blank spaces", "danger");
+      return;
+    }
     if (password !== confirmPassword) {
       addToast("The passwords does'nt match", "danger");
+      return;
+    }
+    if (image.trim().length === 0) {
+      addToast("The profile image is required", "danger");
       return;
     }
     registerUser();
@@ -39,6 +47,7 @@ const Register: React.FC = () => {
         encrypted_private_key: encriptedPrivateKey,
         password: password,
         public_key: publicKey,
+        profile_image: dataUri,
       });
 
       addToast("User registered successfully", "success");
@@ -89,13 +98,11 @@ const Register: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-indigo-600 p-4">
       <div className="bg-white shadow-lg rounded-lg p-8 max-w-md w-full">
         <h2 className="text-2xl font-semibold text-center text-gray-800">
-          Registrar
+          Register
         </h2>
 
         <div className="mt-4">
-          <label className="block text-gray-600 text-sm mb-2">
-            Nome de Usuário
-          </label>
+          <label className="block text-gray-600 text-sm mb-2">Username</label>
           <input
             className="w-full px-3 py-2 border rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 ease-in-out"
             type="text"
@@ -114,11 +121,11 @@ const Register: React.FC = () => {
         </div>
 
         <div className="mt-4">
-          <label className="block text-gray-600 text-sm mb-2">Senha</label>
+          <label className="block text-gray-600 text-sm mb-2">Password</label>
           <input
             className="w-full px-3 py-2 border rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 ease-in-out"
             type="password"
-            placeholder="Senha"
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -126,12 +133,12 @@ const Register: React.FC = () => {
 
         <div className="mt-4">
           <label className="block text-gray-600 text-sm mb-2">
-            Confirmar Senha
+            Confirm Password
           </label>
           <input
             className="w-full px-3 py-2 border rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 ease-in-out"
             type="password"
-            placeholder="Confirmar Senha"
+            placeholder="Confirm Password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
@@ -142,14 +149,14 @@ const Register: React.FC = () => {
             className="bg-purple-500 w-full hover:bg-purple-900 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 ease-in-out transform hover:scale-105"
             onClick={handleRegister}
           >
-            Registrar
+            Register
           </button>
         </div>
 
         <p className="mt-4 text-center text-sm text-gray-500">
-          Já tem uma conta?{" "}
+          Already have an account?{" "}
           <a href="/" className="text-purple-500 hover:underline">
-            Entre aqui
+            Login here
           </a>
         </p>
       </div>

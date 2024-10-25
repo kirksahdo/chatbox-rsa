@@ -3,7 +3,7 @@ import AuthController from "../controllers/AuthController";
 import { useToast } from "../hooks/useToast";
 import { useAuth } from "../hooks/useAuth";
 import { useLoading } from "../hooks/useLoading";
-import { decryptPrivateKey, encryptPrivateKey } from "../utils/crypto";
+import { decryptPrivateKey } from "../utils/crypto";
 
 const Login = () => {
   // States
@@ -89,7 +89,7 @@ const Login = () => {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="w-full px-3 py-2 border rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 ease-in-out"
-            placeholder="Digite seu username"
+            placeholder="Insert your username"
           />
         </div>
         <div className="mb-6">
@@ -97,7 +97,7 @@ const Login = () => {
             className="block text-gray-700 text-sm font-bold mb-2"
             htmlFor="password"
           >
-            Senha
+            Password
           </label>
           <input
             id="password"
@@ -105,7 +105,7 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-3 py-2 border rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 ease-in-out"
-            placeholder="Digite sua senha"
+            placeholder="Insert your password"
           />
         </div>
         <div className="flex items-center justify-between">
@@ -113,14 +113,14 @@ const Login = () => {
             onClick={handleLogin}
             className="bg-purple-500 w-full hover:bg-purple-900 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 ease-in-out transform hover:scale-105"
           >
-            Entrar
+            Login
           </button>
         </div>
         <div className="text-center mt-4">
           <p className="text-sm text-gray-600">
-            Não tem uma conta?{" "}
+            Don't have an account?{" "}
             <a href="/register" className="text-purple-500 hover:underline">
-              Registrar
+              Register
             </a>
           </p>
         </div>
