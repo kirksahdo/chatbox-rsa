@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, BLOB
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from database import Base
@@ -11,6 +11,7 @@ class User(Base):
     hashed_password = Column(String)
     public_key = Column(String) 
     encrypted_private_key = Column(String)
+    profile_image = Column(BLOB)
     
     
     sent_messages = relationship("Message", foreign_keys="[Message.sender_id]", back_populates="sender")

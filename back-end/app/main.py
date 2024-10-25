@@ -61,7 +61,8 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
         username=user.username,
         hashed_password=hashed_password,
         public_key=user.public_key,
-        encrypted_private_key=user.encrypted_private_key
+        encrypted_private_key=user.encrypted_private_key,
+        profile_image = user.profile_image
     )
     try:
         db.add(db_user)
@@ -88,6 +89,7 @@ def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
         "username": db_user.username,
         "publicKey" : db_user.public_key,
         "encryptedPrivateKey" : db_user.encrypted_private_key,
+        "profileImage": db_user.profile_image,
         "token": access_token
     }
 
@@ -104,6 +106,7 @@ def token(user: schemas.TokenLogin, db: Session = Depends(get_db)):
         "username": db_user.username,
         "publicKey" : db_user.public_key,
         "encryptedPrivateKey" : db_user.encrypted_private_key,
+        "profileImage": db_user.profile_image,
         "token": user.token
     }
 
@@ -165,6 +168,7 @@ def get_messages(db: Session = Depends(get_db), token: str = Depends(auth.decode
             recipient_id=user.id,
             recipient_username=user.username,
             recipient_public_key=user.public_key,
+            recipient_profile_image=user.profile_image,
             messages=chats_dict[user.id]["messages"]
         )
         for user in recipients

@@ -6,6 +6,7 @@ class UserCreate(BaseModel):
     password: str
     public_key: str
     encrypted_private_key: str
+    profile_image: bytes
 
 class UserLogin(BaseModel):
     username: str
@@ -24,7 +25,7 @@ class UserDTO(BaseModel):
     id: int
     username: str
     public_key: str
-
+    profile_image: bytes
     model_config = ConfigDict(from_attributes=True)
 
 class TokenLogin(BaseModel):
@@ -53,6 +54,7 @@ class ChatDTO(BaseModel):
     recipient_id: int
     recipient_username: str
     recipient_public_key: str
+    recipient_profile_image: bytes
     messages: list[MessageDTO]
 
     model_config = ConfigDict(from_attributes=True)
