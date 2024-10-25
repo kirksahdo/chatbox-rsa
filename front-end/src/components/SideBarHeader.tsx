@@ -9,7 +9,15 @@ const SideBarHeader = () => {
 
   return (
     <header className="p-4 border-b border-gray-300 flex justify-between items-center bg-purple-950 text-white">
-      <h1 className="text-2xl font-semibold">{`Hello, ${user?.username}`}</h1>
+      <div className="flex gap-3 items-center">
+        <img
+          src={user?.profileImage}
+          className="w-9 h-9 rounded-full"
+          alt="Profile"
+        />
+        <h1 className="text-2xl font-semibold">{`Hello, ${user?.username}`}</h1>
+      </div>
+
       <div className="relative p-0 m-0">
         <button
           id="menuButton"

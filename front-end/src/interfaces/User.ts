@@ -3,5 +3,6 @@ export interface User {
   username: string;
   token: string;
   encryptedPrivateKey: string;
+  profileImage: string;
   publicKey: string;
 }

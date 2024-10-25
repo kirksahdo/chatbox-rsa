@@ -18,6 +18,7 @@ const UsersList: React.FC<{ users: User[]; handleClick: () => void }> = ({
         recipient_id: user.id,
         recipient_public_key: user.publicKey,
         recipient_username: user.username,
+        recipient_profile_image: user.profile_image,
         messages: [],
       };
       changeChats([...chats, newChat]);

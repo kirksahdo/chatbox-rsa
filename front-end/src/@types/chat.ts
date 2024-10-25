@@ -2,6 +2,7 @@ export interface Chat {
   recipient_id: number;
   recipient_username: string;
   recipient_public_key: string;
+  recipient_profile_image: string;
   messages: Message[];
 }
 

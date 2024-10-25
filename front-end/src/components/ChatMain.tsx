@@ -86,9 +86,13 @@ const ChatMain = () => {
     <div className="flex-1 flex flex-col">
       {currentChat ? (
         <>
-          <header className="bg-white p-4 text-gray-700">
+          <header className="bg-white p-4 text-gray-700 flex gap-2 items-center">
+            <img
+              className="w-12 h-12 rounded-full"
+              src={currentChat?.recipient_profile_image}
+              alt="Profile"
+            />
             <h1 className="text-2xl font-semibold">
-              {" "}
               {currentChat?.recipient_username}
             </h1>
           </header>

@@ -54,6 +54,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
         recipient_id: sender.id,
         recipient_public_key: sender.publicKey,
         recipient_username: sender.username,
+        recipient_profile_image: sender.profile_image,
         messages: [
           {
             id: 0,

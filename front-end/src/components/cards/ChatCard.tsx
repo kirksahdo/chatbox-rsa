@@ -17,7 +17,7 @@ const ChatCard: React.FC<{
     >
       <div className="w-12 h-12 bg-gray-300 rounded-full mr-3">
         <img
-          src="https://placehold.co/200x/ffa8e4/ffffff.svg?text=ʕ•́ᴥ•̀ʔ&font=Lato"
+          src={chat.recipient_profile_image}
           alt="User Avatar"
           className="w-12 h-12 rounded-full"
         />
