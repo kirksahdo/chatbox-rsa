@@ -6,6 +6,10 @@ const SendedMessageCard: React.FC<{ message: Message }> = ({ message }) => {
   return (
     <div className="flex justify-end mb-4 cursor-pointer">
       <div className="flex max-w-96 flex-wrap bg-indigo-500 text-white rounded-lg p-3 flex-col">
+        <h3 className="text-xs text-white font-bold">
+          {" "}
+          {message.sender_username}
+        </h3>
         <p style={{ wordBreak: "break-all" }}>{message.encrypted_message}</p>
         <p className="text-xs text-gray-400">
           {moment(message.timestamp).format("HH:mm DD/mm/YYYY")}

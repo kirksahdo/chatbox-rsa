@@ -13,6 +13,9 @@ const ReceivedMessageCard: React.FC<{ message: Message }> = ({ message }) => {
         />
       </div> */}
       <div className="flex max-w-96 bg-white rounded-lg p-3 flex-col">
+        <h3 className="text-xs text-black font-bold">
+          {message.sender_username}
+        </h3>
         <p style={{ wordBreak: "break-all" }} className="text-gray-700">
           {message.encrypted_message}
         </p>
