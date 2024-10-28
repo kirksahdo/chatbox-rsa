@@ -12,7 +12,12 @@ import { useAuth } from "./useAuth";
 import { useCurrentChat } from "./useCurrentChat";
 import UserController from "../controllers/UserController";
 import { useToast } from "./useToast";
-import { decryptMessage } from "../utils/crypto";
+import {
+  decryptGroupMessage,
+  decryptMessage,
+  decryptSessionKey,
+} from "../utils/crypto";
+import GroupController from "../controllers/GroupController";
 
 const ChatContext = createContext<ChatContextType | null>(null);
 
@@ -44,29 +49,72 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
   }, [currentChat]);
 
   const addNewChat = useCallback(
-    async (message: string, sender_id: number, recipient_id: number) => {
+    async (
+      message: string,
+      sender_id: number,
+      recipient_id: number,
+      is_group: boolean,
+    ) => {
       const newChats = [...chatsRef.current];
+      let newChat: Chat;
+
       const sender = await UserController.getUser({
-        id: sender_id !== user!.id ? sender_id : recipient_id,
+        id: is_group
+          ? sender_id
+          : sender_id !== user!.id
+          ? sender_id
+          : recipient_id,
       });
 
-      const newChat: Chat = {
-        recipient_id: sender.id,
-        recipient_public_key: sender.publicKey,
-        recipient_username: sender.username,
-        recipient_profile_image: sender.profile_image,
-        messages: [
-          {
-            id: 0,
-            recipient_id: recipient_id,
-            sender_id: sender_id,
-            encrypted_message: message,
-            sender_encrypted_message: message,
-            timestamp: new Date(),
-          },
-        ],
-      };
-      setChats([...newChats, newChat]);
+      if (is_group) {
+        const group = await GroupController.get({
+          group_id: recipient_id,
+        });
+        const cryptedSessionKey = await GroupController.getSessionKey({
+          group_id: group.id,
+        });
+        newChat = {
+          recipient_id: group.id,
+          recipient_public_key: cryptedSessionKey,
+          recipient_username: group.name,
+          // TODO: add profile group image
+          recipient_profile_image: "",
+          messages: [
+            {
+              id: 0,
+              recipient_id: recipient_id,
+              sender_id: sender_id,
+              sender_username: sender.username,
+              encrypted_message: message,
+              sender_encrypted_message: message,
+              timestamp: new Date(),
+            },
+          ],
+          is_group: false,
+        };
+      } else {
+        newChat = {
+          recipient_id: sender.id,
+          recipient_public_key: sender.public_key,
+          recipient_username: sender.username,
+          recipient_profile_image: sender.profile_image,
+          messages: [
+            {
+              id: 0,
+              recipient_id: recipient_id,
+              sender_id: sender_id,
+              sender_username:
+                sender_id === user!.id ? user!.username : sender.username,
+              encrypted_message: message,
+              sender_encrypted_message: message,
+              timestamp: new Date(),
+            },
+          ],
+          is_group: false,
+        };
+      }
+
+      setChats([newChat, ...newChats]);
       addToast(message, "notification", sender.username);
     },
     [addToast, user],
@@ -78,34 +126,61 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
       sender_message: string,
       sender_id: number,
       recipient_id: number,
+      is_group: boolean,
     ) => {
       try {
         const sender = await UserController.getUser({
-          id: sender_id !== user!.id ? sender_id : recipient_id,
+          id: is_group
+            ? sender_id
+            : sender_id !== user!.id
+            ? sender_id
+            : recipient_id,
         });
-        const newChats = [...chatsRef.current];
+        let decryptedMessage = "";
+        if (is_group) {
+          const group = await GroupController.get({ group_id: recipient_id });
+          const cryptedSessionKey = await GroupController.getSessionKey({
+            group_id: group.id,
+          });
 
-        const decryptedMessage =
-          recipient_id === user!.id
-            ? decryptMessage(message, user!.encryptedPrivateKey)
-            : decryptMessage(sender_message, user!.encryptedPrivateKey);
+          const decryptedSessionKey = decryptSessionKey(
+            cryptedSessionKey,
+            user!.encryptedPrivateKey,
+          );
+          decryptedMessage = decryptGroupMessage(message, decryptedSessionKey);
+        } else {
+          decryptedMessage =
+            recipient_id === user!.id
+              ? decryptMessage(message, user!.encryptedPrivateKey)
+              : decryptMessage(sender_message, user!.encryptedPrivateKey);
+        }
+
+        const newChats = [...chatsRef.current];
 
         for (let i = 0; newChats.length; i++) {
           if (
-            newChats[i].recipient_id === recipient_id ||
-            newChats[i].recipient_id === sender.id
+            ((newChats[i].recipient_id === recipient_id ||
+              newChats[i].recipient_id === sender.id) &&
+              !is_group) ||
+            (is_group && newChats[i].recipient_id === recipient_id)
           ) {
             newChats[i].messages.push({
               id: newChats[i].messages.length + 1,
               recipient_id: recipient_id,
               sender_id: sender_id,
+              sender_username:
+                sender_id === user!.id ? user!.username : sender.username,
               encrypted_message: decryptedMessage,
               sender_encrypted_message: decryptedMessage,
               timestamp: new Date(),
             });
+
             if (
-              currentChatRef.current?.recipient_id === sender_id ||
-              currentChatRef.current?.recipient_id === recipient_id
+              ((currentChatRef.current?.recipient_id === sender_id ||
+                currentChatRef.current?.recipient_id === recipient_id) &&
+                !is_group) ||
+              (is_group &&
+                currentChatRef.current?.recipient_id === recipient_id)
             ) {
               changeCurrentChat(newChats[i]);
             } else {
@@ -115,11 +190,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
                 newChats[i].recipient_username,
               );
             }
+            var aux = newChats[i];
+            newChats[i] = newChats[0];
+            newChats[0] = aux;
             setChats([...newChats]);
             return;
           }
         }
-        await addNewChat(decryptedMessage, sender_id, recipient_id);
+        await addNewChat(decryptedMessage, sender_id, recipient_id, is_group);
       } catch (err) {
         console.error(err);
       }
@@ -142,13 +220,15 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
         sender_id: number;
         message: string;
         sender_message: string;
+        group_id?: number;
       } = JSON.parse(event.data);
       console.log("message:", message);
       addMessage(
         message.message,
         message.sender_message,
         message.sender_id,
-        user!.id,
+        message.group_id ? message.group_id : user!.id,
+        !!message.group_id,
       );
     };
     connection.current = socket;
