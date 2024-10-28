@@ -3,12 +3,16 @@ import Select from "react-select";
 import UserController from "../../controllers/UserController";
 import { useLoading } from "../../hooks/useLoading";
 import { User } from "../../@types/user";
+import { generateSessionKey, encryptSessionKey } from "../../utils/crypto";
 import ModalBase from "./ModalBase";
+import GroupController from "../../controllers/GroupController";
+import { useToast } from "../../hooks/useToast";
+import { useAuth } from "../../hooks/useAuth";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (groupName: string, members: User[]) => void;
+  onCreate: () => void;
 }
 
 interface GroupSelectOption {
@@ -34,11 +38,39 @@ const CreateGroupModal: React.FC<ModalProps> = ({
 
   // Global Contexts
   const { setIsLoading } = useLoading();
+  const { addToast } = useToast();
+  const { user } = useAuth();
 
   // Event Handlers
-  const handleCreateGroup = () => {
-    // TODO: Create Group Logic
-    onClose();
+  const handleCreateGroup = async () => {
+    try {
+      setIsLoading(true);
+
+      const groupSessionKey = generateSessionKey();
+
+      await GroupController.create({
+        name: groupName,
+        users: [
+          ...selectedMembers.map((user) => ({
+            id: user.id,
+            crypted_key: encryptSessionKey(groupSessionKey, user.public_key),
+          })),
+          {
+            id: user!.id,
+            crypted_key: encryptSessionKey(groupSessionKey, user!.publicKey),
+          },
+        ],
+      });
+
+      addToast("Group created successfully", "success");
+      onCreate();
+      onClose();
+    } catch (error) {
+      addToast("Error creating group", "danger");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Fetch All Users
@@ -75,7 +107,7 @@ const CreateGroupModal: React.FC<ModalProps> = ({
           placeholder="Group Name"
           value={groupName}
           onChange={(e) => setGroupName(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg p-2 mb-2"
+          className="w-full border text-gray-600 border-gray-300 rounded-lg p-2 mb-2"
         />
 
         <Select
@@ -86,6 +118,14 @@ const CreateGroupModal: React.FC<ModalProps> = ({
           onChange={(selected) =>
             setSelectedMembers(selected.map((s) => s.value))
           }
+          styles={{
+            control: (base) => ({
+              ...base,
+              borderColor: "#d1d5db",
+            }),
+            multiValue: (base) => ({ ...base, backgroundColor: "#e0e7ff" }),
+            option: (base) => ({ ...base, color: "black", cursor: "pointer" }),
+          }}
         />
       </>
     </ModalBase>
