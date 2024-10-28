@@ -6,7 +6,12 @@ import SendedMessageCard from "./cards/SendedMessageCard";
 import { useToast } from "../hooks/useToast";
 import ChatController from "../controllers/ChatController";
 import { useChat } from "../hooks/useChats";
-import { encryptMessage } from "../utils/crypto";
+import {
+  encryptMessage,
+  decryptSessionKey,
+  encryptGroupMessage,
+} from "../utils/crypto";
+import GroupController from "../controllers/GroupController";
 
 const ChatMain = () => {
   const { addMessage } = useChat();
@@ -54,18 +59,35 @@ const ChatMain = () => {
     try {
       if (currentChatRef.current) {
         const { recipient_public_key, recipient_id } = currentChatRef.current;
-        const encryptedMessage = encryptMessage(message, recipient_public_key);
-        const senderEncryptedMessage = encryptMessage(message, user!.publicKey);
-        await ChatController.sendMessage({
-          encrypted_message: encryptedMessage,
-          recipient_id: recipient_id,
-          sender_encrypted_message: senderEncryptedMessage,
-        });
+        let encryptedMessage = "";
+        let senderEncryptedMessage = "";
+        if (currentChatRef.current.is_group) {
+          const sessionKey = decryptSessionKey(
+            recipient_public_key,
+            user!.encryptedPrivateKey,
+          );
+          encryptedMessage = encryptGroupMessage(message, sessionKey);
+          senderEncryptedMessage = encryptedMessage;
+
+          await GroupController.sendMessage({
+            encrypted_message: encryptedMessage,
+            group_id: recipient_id,
+          });
+        } else {
+          encryptedMessage = encryptMessage(message, recipient_public_key);
+          senderEncryptedMessage = encryptMessage(message, user!.publicKey);
+          await ChatController.sendMessage({
+            encrypted_message: encryptedMessage,
+            recipient_id: recipient_id,
+            sender_encrypted_message: senderEncryptedMessage,
+          });
+        }
         await addMessage(
           encryptedMessage,
           senderEncryptedMessage,
           user!.id,
           recipient_id,
+          currentChatRef.current.is_group,
         );
         addToast("Message sent!", "success");
         scrollToBottom();

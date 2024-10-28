@@ -10,14 +10,23 @@ import ChatList from "./lists/ChatList";
 import { User } from "../@types/user";
 import { useChat } from "../hooks/useChats";
 import { useAuth } from "../hooks/useAuth";
-import { decryptMessage } from "../utils/crypto";
+import {
+  decryptGroupMessage,
+  decryptMessage,
+  decryptSessionKey,
+} from "../utils/crypto";
+import GroupController from "../controllers/GroupController";
+import { useLoading } from "../hooks/useLoading";
 
 const ChatSideBar = () => {
+  // Component States
   const [searchInput, setSearchInput] = useState("");
+  const [mode, setMode] = useState<"messages" | "search">("messages");
+
+  // Global Contexts
   const { addToast } = useToast();
   const { user } = useAuth();
-
-  const [mode, setMode] = useState<"messages" | "search">("messages");
+  const { setIsLoading } = useLoading();
 
   // Users List
   const [users, setUsers] = useState<User[]>([]);
@@ -40,26 +49,53 @@ const ChatSideBar = () => {
   const { chats, changeChats } = useChat();
   const getChats = async () => {
     try {
+      setIsLoading(true);
       const result = await ChatController.get();
-      const chats = result.map((chat) => ({
-        ...chat,
-        messages: chat.messages.map((message) => {
-          const msg =
-            user!.id === message.recipient_id
-              ? decryptMessage(
-                  message.encrypted_message,
-                  user!.encryptedPrivateKey,
-                )
-              : decryptMessage(
-                  message.sender_encrypted_message,
-                  user!.encryptedPrivateKey,
-                );
-          return { ...message, encrypted_message: msg };
-        }),
-      }));
-      changeChats([...chats]);
+      const chats = result.map(async (chat) => {
+        if (chat.is_group) {
+          const encryptedSession = await GroupController.getSessionKey({
+            group_id: chat.recipient_id,
+          });
+          const decryptedSession = decryptSessionKey(
+            encryptedSession,
+            user!.encryptedPrivateKey,
+          );
+
+          return {
+            ...chat,
+            messages: chat.messages.map((message) => {
+              const msg = decryptGroupMessage(
+                message.encrypted_message,
+                decryptedSession,
+              );
+              return { ...message, encrypted_message: msg };
+            }),
+          };
+        }
+        return {
+          ...chat,
+          messages: chat.messages.map((message) => {
+            const msg =
+              user!.id === message.recipient_id
+                ? decryptMessage(
+                    message.encrypted_message,
+                    user!.encryptedPrivateKey,
+                  )
+                : decryptMessage(
+                    message.sender_encrypted_message,
+                    user!.encryptedPrivateKey,
+                  );
+
+            return { ...message, encrypted_message: msg };
+          }),
+        };
+      });
+      const resultChats = await Promise.all(chats);
+      changeChats([...resultChats]);
     } catch (err: any) {
       addToast(err.message, "danger");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,7 +109,7 @@ const ChatSideBar = () => {
 
   return (
     <div className="w-1/4 bg-white border-r border-gray-300">
-      <SideBarHeader />
+      <SideBarHeader onCreateGroup={getChats} />
 
       <SideBarMode
         mode={mode}
