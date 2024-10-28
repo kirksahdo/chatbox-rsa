@@ -28,13 +28,15 @@ const ModalBase: React.FC<ModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
       <div className="bg-white rounded-lg shadow-lg p-6 w-96 relative gap-2 flex flex-col">
         <h2
-          className="text-xl absolute right-3 top-2 cursor-pointer"
+          className="text-xl absolute right-3 top-2 cursor-pointer text-black"
           onClick={onClose}
         >
           {"x"}
         </h2>
 
-        <h2 className="text-xl font-semibold w-full text-center">{title}</h2>
+        <h3 className="text-xl font-semibold w-full text-center text-gray-700">
+          {title}
+        </h3>
 
         {children}
 
