@@ -4,12 +4,14 @@ export interface Chat {
   recipient_public_key: string;
   recipient_profile_image: string;
   messages: Message[];
+  is_group: boolean;
 }
 
 export interface Message {
   id: number;
   recipient_id: number;
   sender_id: number;
+  sender_username: string;
   encrypted_message: string;
   sender_encrypted_message: string;
   timestamp: Date;
@@ -23,6 +25,7 @@ export interface ChatContextType {
     sender_message: string,
     sender_id: number,
     recipient_id: number,
+    is_group: boolean,
   ) => Promise<void>;
 }
 
