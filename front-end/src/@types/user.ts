@@ -1,7 +1,7 @@
 export interface User {
   id: number;
   username: string;
-  publicKey: string;
+  public_key: string;
   profile_image: string;
 }
 
