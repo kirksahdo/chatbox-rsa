@@ -2,13 +2,38 @@ import { CiLogout } from "react-icons/ci";
 import { useAuth } from "../hooks/useAuth";
 import { useState } from "react";
 import { IoMdMenu } from "react-icons/io";
+import { HiUserGroup } from "react-icons/hi";
 
-const SideBarHeader = () => {
-  const { user, logout } = useAuth();
+import CreateGroupModal from "./modals/CreateGroupModal";
+
+const SideBarHeader: React.FC<{ onCreateGroup: () => void }> = ({
+  onCreateGroup,
+}) => {
+  // Componente States
   const [showMenu, setShowMenu] = useState(false);
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+
+  // Global Contexts
+  const { user, logout } = useAuth();
+
+  // Handlers
+  const handlerCreateGroup = () => {
+    setShowMenu(false);
+    setShowCreateGroupModal(true);
+  };
 
   return (
     <header className="p-4 border-b border-gray-300 flex justify-between items-center bg-purple-950 text-white">
+      {/* Modals */}
+      {showCreateGroupModal && (
+        <CreateGroupModal
+          isOpen={showCreateGroupModal}
+          onClose={() => setShowCreateGroupModal(false)}
+          onCreate={onCreateGroup}
+        />
+      )}
+
+      {/* Component */}
       <div className="flex gap-3 items-center">
         <img
           src={user?.profileImage}
@@ -34,8 +59,16 @@ const SideBarHeader = () => {
           >
             <ul className="py-2 px-3">
               <li>
-                <a
-                  href="/"
+                <button
+                  className="flex items-center gap-2 px-4 py-2 text-gray-800 hover:text-gray-400"
+                  onClick={handlerCreateGroup}
+                >
+                  <HiUserGroup />
+                  New Group
+                </button>
+              </li>
+              <li>
+                <button
                   className="flex items-center gap-2 px-4 py-2 text-gray-800 hover:text-gray-400"
                   onClick={() => {
                     logout();
@@ -43,7 +76,7 @@ const SideBarHeader = () => {
                 >
                   <CiLogout />
                   Logout
-                </a>
+                </button>
               </li>
             </ul>
           </div>
