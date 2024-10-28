@@ -1,6 +1,6 @@
 from fastapi import FastAPI, WebSocket, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 from sqlalchemy import and_, or_
 from sqlalchemy.exc import IntegrityError
 import models, schemas, auth
@@ -196,18 +196,26 @@ def get_messages(
 ):
     sender_id = token["id"]
 
-    # Get All Groups that user is member
-    user_groups = (
-        db.query(models.GroupUser).filter(models.GroupUser.user_id == sender_id).all()
-    )
-    user_groups_ids = [groups.group_id for groups in user_groups]
+    group = aliased(models.Group)
 
-    # Get Groups
-    groups = db.query(models.Group).filter(models.Group.id.in_(user_groups_ids))
+    # Get All Groups that user is member
+    groups = (
+        db.query(models.GroupUser, group)
+        .join(group, group.id == models.GroupUser.group_id)
+        .filter(models.GroupUser.user_id == sender_id)
+        .all()
+    )
+
+    user_groups_ids = [group[1].id for group in groups]
 
     # Get All Groups Messages from User
+    # Join Aliased
+    sender_user = aliased(models.User)
+    recipient_user = aliased(models.User)
+
     user_messages_groups = (
-        db.query(models.GroupMessage)
+        db.query(models.GroupMessage, sender_user.username.label("sender_username"))
+        .join(sender_user, models.GroupMessage.sender_id == sender_user.id)
         .filter(models.GroupMessage.group_id.in_(user_groups_ids))
         .all()
     )
@@ -217,17 +225,26 @@ def get_messages(
 
     # Separate Group Messages by ID
     for message in user_messages_groups:
-        chats_groups_dict[message.group_id]["messages"].append(
-            schemas.MessageDTO.model_validate(message)
+        chats_groups_dict[message[0].group_id]["messages"].append(
+            schemas.MessageDTO(
+                id=message[0].id,
+                encrypted_message=message[0].encrypted_message,
+                recipient_id=message[0].group_id,
+                sender_encrypted_message=message[0].encrypted_message,
+                sender_id=message[0].sender_id,
+                sender_username=message[1],
+                timestamp=message[0].timestamp,
+                message=message[0].encrypted_message,
+            )
         )
 
     group_chats = [
         schemas.ChatDTO(
-            recipient_id=group.id,
-            recipient_username=group.name,
-            recipient_public_key="",
+            recipient_id=group[1].id,
+            recipient_username=group[1].name,
+            recipient_public_key=group[0].crypted_key,
             recipient_profile_image="",
-            messages=chats_groups_dict[group.id]["messages"],
+            messages=chats_groups_dict[group[1].id]["messages"],
             is_group=True,
         )
         for group in groups
@@ -237,7 +254,21 @@ def get_messages(
 
     # Get Single Messages
     messages = (
-        db.query(models.Message)
+        db.query(
+            models.Message.id,
+            models.Message.timestamp,
+            models.Message.sender_id,
+            models.Message.recipient_id,
+            models.Message.encrypted_message,
+            models.Message.sender_encrypted_message,
+            sender_user.username.label("sender_username"),
+        )
+        .join(
+            sender_user, models.Message.sender_id == sender_user.id
+        )  # JOIN com remetente
+        .join(
+            recipient_user, models.Message.recipient_id == recipient_user.id
+        )  # JOIN com destinatário
         .filter(
             or_(
                 models.Message.sender_id == sender_id,
@@ -329,8 +360,8 @@ def create_group(
     return {"msg": "Created new group"}
 
 
-@app.post("/groups/messages/")
-async def send_message(
+@app.post("/groups/messages")
+async def send_group_message(
     message: schemas.GroupMessageCreate,
     db: Session = Depends(get_db),
     token: str = Depends(auth.decode_access_token),
@@ -357,10 +388,62 @@ async def send_message(
     db.commit()
 
     for user in group_users:
-        if user.id == db_user.id:
+        if user.user_id == db_user.id:
             continue
+
         await send_message_to_user(
-            user.id, db_user.id, message.encrypted_message, message.encrypted_message
+            user.user_id,
+            db_user.id,
+            message.encrypted_message,
+            message.encrypted_message,
+            group.id,
         )
 
     return {"msg": "Message sent"}
+
+
+@app.get("/groups/session/{group_id}")
+def get_users(
+    group_id: int,
+    db: Session = Depends(get_db),
+    token: str = Depends(auth.decode_access_token),
+):
+    user_id = token["id"]
+
+    user_group = (
+        db.query(models.GroupUser)
+        .filter(
+            and_(
+                models.GroupUser.group_id == group_id,
+                models.GroupUser.user_id == user_id,
+            )
+        )
+        .first()
+    )
+
+    if not user_group:
+        raise HTTPException(status_code=404, detail="User not found in group")
+
+    return user_group.crypted_key
+
+
+@app.get("/groups/{group_id}")
+def get_users(
+    group_id: int,
+    db: Session = Depends(get_db),
+    token: str = Depends(auth.decode_access_token),
+):
+    group = (
+        db.query(models.Group)
+        .filter(
+            and_(
+                models.Group.id == group_id,
+            )
+        )
+        .first()
+    )
+
+    if not group:
+        raise HTTPException(status_code=404, detail="User not found in group")
+
+    return group

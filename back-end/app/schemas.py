@@ -51,6 +51,7 @@ class WebSocketMessage(BaseModel):
 class MessageDTO(BaseModel):
     id: int
     sender_id: int
+    sender_username: str
     encrypted_message: str
     recipient_id: Optional[int] = None
     sender_encrypted_message: Optional[str] = None
