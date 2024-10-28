@@ -16,10 +16,11 @@ const UsersList: React.FC<{ users: User[]; handleClick: () => void }> = ({
     (user: User) => {
       const newChat: Chat = {
         recipient_id: user.id,
-        recipient_public_key: user.publicKey,
+        recipient_public_key: user.public_key,
         recipient_username: user.username,
         recipient_profile_image: user.profile_image,
         messages: [],
+        is_group: false,
       };
       changeChats([...chats, newChat]);
       changeCurrentChat(newChat);
@@ -29,7 +30,9 @@ const UsersList: React.FC<{ users: User[]; handleClick: () => void }> = ({
 
   const handleClickCard = useCallback(
     (user: User) => {
-      const chat = chats.find((chat) => chat.recipient_id === user.id);
+      const chat = chats.find(
+        (chat) => chat.recipient_id === user.id && !chat.is_group,
+      );
       if (chat) {
         changeCurrentChat(chat);
       } else {
