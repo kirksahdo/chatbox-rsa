@@ -19,7 +19,6 @@ const UserCard: React.FC<{ user: User; onClick: () => void }> = ({
       </div>
       <div className="flex-1">
         <h2 className="text-lg font-semibold">{user.username}</h2>
-        <p className="text-gray-600">Hoorayy!!</p>
       </div>
     </div>
   );
