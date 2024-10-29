@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import React from "react";
 
 interface ModalProps {
@@ -26,7 +27,7 @@ const ModalBase: React.FC<ModalProps> = ({
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-96 relative gap-2 flex flex-col">
+      <div className="bg-white rounded-lg shadow-lg p-6 min-w-96 relative gap-2 flex flex-col">
         <h2
           className="text-xl absolute right-3 top-2 cursor-pointer text-black"
           onClick={onClose}
@@ -44,7 +45,7 @@ const ModalBase: React.FC<ModalProps> = ({
           {secondaryLabel && (
             <button
               onClick={onSecondaryClick}
-              className="bg-gray-300 hover:bg-gray-500 text-gray-700 px-4 py-2 rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer"
+              className="bg-red-300 hover:bg-red-800 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer"
             >
               {secondaryLabel}
             </button>
@@ -52,7 +53,11 @@ const ModalBase: React.FC<ModalProps> = ({
           {primaryLabel && (
             <button
               onClick={onPrimaryClick}
-              className="bg-purple-500 hover:bg-purple-900 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer"
+              className={clsx(
+                !isPrimaryDisabled
+                  ? "bg-purple-500 hover:bg-purple-900 text-white py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer"
+                  : "bg-gray-200 text-white py-2 px-4 rounded-lg focus:outline-none",
+              )}
               disabled={isPrimaryDisabled}
             >
               {primaryLabel}
