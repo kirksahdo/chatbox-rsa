@@ -8,6 +8,7 @@ import ModalBase from "./ModalBase";
 import GroupController from "../../controllers/GroupController";
 import { useToast } from "../../hooks/useToast";
 import { useAuth } from "../../hooks/useAuth";
+import ImageInput from "../inputs/ImageInput";
 
 interface ModalProps {
   isOpen: boolean;
@@ -50,6 +51,7 @@ const CreateGroupModal: React.FC<ModalProps> = ({
 
       await GroupController.create({
         name: groupName,
+        profile_image: dataUri,
         users: [
           ...selectedMembers.map((user) => ({
             id: user.id,
@@ -90,13 +92,45 @@ const CreateGroupModal: React.FC<ModalProps> = ({
     getUsers();
   }, []);
 
+  // Input File State
+  const [dataUri, setDataUri] = useState("");
+  const [image, setImage] = useState("");
+
+  // Input File Functions
+
+  const fileToDataUri = (file: File) => {
+    return new Promise<string | ArrayBuffer | null | undefined>(
+      (resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event: ProgressEvent<FileReader>) => {
+          resolve(event.target?.result);
+        };
+        reader.readAsDataURL(file);
+      },
+    );
+  };
+
+  const onChangeFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setImage(e.target.value);
+    const file = e.target.files ? e.target.files[0] : null;
+
+    if (!file) {
+      setDataUri("");
+      return;
+    }
+
+    fileToDataUri(file).then((dataUri) => {
+      setDataUri(dataUri?.toString() || "");
+    });
+  };
+
   return (
     <ModalBase
       isOpen={isOpen}
       title="Create New Group"
       onClose={onClose}
       primaryLabel="Create"
-      isPrimaryDisabled={!groupName || selectedMembers.length === 0}
+      isPrimaryDisabled={!groupName || selectedMembers.length === 0 || !image}
       onPrimaryClick={handleCreateGroup}
       secondaryLabel="Cancel"
       onSecondaryClick={onClose}
@@ -108,6 +142,12 @@ const CreateGroupModal: React.FC<ModalProps> = ({
           value={groupName}
           onChange={(e) => setGroupName(e.target.value)}
           className="w-full border text-gray-600 border-gray-300 rounded-lg p-2 mb-2"
+        />
+
+        <ImageInput
+          label="Profile Image"
+          onChange={onChangeFileInput}
+          value={image}
         />
 
         <Select
