@@ -4,7 +4,7 @@ import moment from "moment";
 
 const ReceivedMessageCard: React.FC<{ message: Message }> = ({ message }) => {
   return (
-    <div className="flex mb-4 cursor-pointer">
+    <div className="flex mb-4">
       {/* <div className="w-9 h-9 rounded-full flex items-center justify-center mr-2">
         <img
           src="https://placehold.co/200x/ffa8e4/ffffff.svg?text=ʕ•́ᴥ•̀ʔ&font=Lato"
