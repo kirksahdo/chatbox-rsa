@@ -1,9 +1,12 @@
+import { User } from "./user";
+
 export interface CreateGroup {
   name: string;
   users: {
     id: number;
     crypted_key: string;
   }[];
+  profile_image: string;
 }
 
 export interface SendGroupMessage {
@@ -20,5 +23,7 @@ export interface GetGroupById extends GetSessionKeyGroup {}
 export interface Group {
   id: number;
   name: string;
+  profile_image: string;
+  users: User[];
   timestamp: Date;
 }
