@@ -15,13 +15,11 @@ const ChatCard: React.FC<{
       )}
       onClick={(_) => onClick(selected)}
     >
-      <div className="w-12 h-12 bg-gray-300 rounded-full mr-3">
-        <img
-          src={chat.recipient_profile_image}
-          alt="User Avatar"
-          className="w-12 h-12 rounded-full"
-        />
-      </div>
+      <img
+        src={chat.recipient_profile_image}
+        alt="User Avatar"
+        className="w-12 h-12 rounded-full mr-3"
+      />
       <div className="w-full">
         <h2 className="text-lg font-semibold">{chat.recipient_username}</h2>
         <p className="text-gray-600 truncate w-full max-w-full">
