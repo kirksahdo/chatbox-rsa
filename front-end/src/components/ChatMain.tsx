@@ -12,6 +12,7 @@ import {
   encryptGroupMessage,
 } from "../utils/crypto";
 import GroupController from "../controllers/GroupController";
+import ViewGroupModal from "./modals/ViewGroupModal";
 
 const ChatMain = () => {
   const { addMessage } = useChat();
@@ -68,7 +69,7 @@ const ChatMain = () => {
           );
           encryptedMessage = encryptGroupMessage(message, sessionKey);
           senderEncryptedMessage = encryptedMessage;
-
+          setMessage("");
           await GroupController.sendMessage({
             encrypted_message: encryptedMessage,
             group_id: recipient_id,
@@ -76,6 +77,7 @@ const ChatMain = () => {
         } else {
           encryptedMessage = encryptMessage(message, recipient_public_key);
           senderEncryptedMessage = encryptMessage(message, user!.publicKey);
+          setMessage("");
           await ChatController.sendMessage({
             encrypted_message: encryptedMessage,
             recipient_id: recipient_id,
@@ -91,7 +93,6 @@ const ChatMain = () => {
         );
         addToast("Message sent!", "success");
         scrollToBottom();
-        setMessage("");
       }
     } catch (error: any) {
       addToast(error.message, "danger");
@@ -104,11 +105,33 @@ const ChatMain = () => {
     }
   };
 
+  // Modal States
+  const [showViewGroup, setShowViewGroup] = useState(false);
+
+  const handleClickHeader = () => {
+    if (currentChatRef.current?.is_group) {
+      setShowViewGroup(true);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col">
       {currentChat ? (
         <>
-          <header className="bg-white p-4 text-gray-700 flex gap-2 items-center">
+          {/* Modals */}
+
+          {showViewGroup && (
+            <ViewGroupModal
+              isOpen={showViewGroup}
+              onClose={() => setShowViewGroup(false)}
+            />
+          )}
+
+          {/* Components */}
+          <header
+            className="bg-white p-4 text-gray-700 flex gap-2 items-center cursor-pointer"
+            onClick={handleClickHeader}
+          >
             <img
               className="w-12 h-12 rounded-full"
               src={currentChat?.recipient_profile_image}
