@@ -78,8 +78,18 @@ class UserGroup(BaseModel):
 class CreateGroup(BaseModel):
     name: str
     users: list[UserGroup]
+    profile_image: bytes
 
 
 class GroupMessageCreate(BaseModel):
     group_id: int
     encrypted_message: str
+
+
+class GroupDTO(BaseModel):
+    id: int
+    name: str
+    profile_image: bytes
+    users: list[UserDTO]
+
+    model_config = ConfigDict(from_attributes=True)

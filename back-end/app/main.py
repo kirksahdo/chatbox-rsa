@@ -243,7 +243,7 @@ def get_messages(
             recipient_id=group[1].id,
             recipient_username=group[1].name,
             recipient_public_key=group[0].crypted_key,
-            recipient_profile_image="",
+            recipient_profile_image=group[1].profile_image,
             messages=chats_groups_dict[group[1].id]["messages"],
             is_group=True,
         )
@@ -344,9 +344,7 @@ def create_group(
     token: str = Depends(auth.decode_access_token),
 ):
 
-    new_group = models.Group(
-        name=group.name,
-    )
+    new_group = models.Group(name=group.name, profile_image=group.profile_image)
     db.add(new_group)
     db.commit()
     db.refresh(new_group)
@@ -428,11 +426,15 @@ def get_users(
 
 
 @app.get("/groups/{group_id}")
-def get_users(
+def get_group_by_id(
     group_id: int,
     db: Session = Depends(get_db),
     token: str = Depends(auth.decode_access_token),
 ):
+
+    user = aliased(models.User)
+
+    # Get Group
     group = (
         db.query(models.Group)
         .filter(
@@ -446,4 +448,17 @@ def get_users(
     if not group:
         raise HTTPException(status_code=404, detail="User not found in group")
 
-    return group
+    # Get Users
+    users = (
+        db.query(models.GroupUser, user)
+        .join(user, user.id == models.GroupUser.user_id)
+        .filter(models.GroupUser.group_id == group.id)
+        .all()
+    )
+
+    return schemas.GroupDTO(
+        id=group.id,
+        name=group.name,
+        profile_image=group.profile_image,
+        users=[schemas.UserDTO.model_validate(user[1]) for user in users],
+    )

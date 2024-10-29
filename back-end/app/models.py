@@ -51,6 +51,7 @@ class Group(Base):
     __tablename__ = "groups"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
+    profile_image = Column(BLOB)
     timestamp = Column(DateTime, default=datetime.utcnow)
 
     group_messages = relationship(
