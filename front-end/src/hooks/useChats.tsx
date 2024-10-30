@@ -158,43 +158,45 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
         const newChats = [...chatsRef.current];
 
         for (let i = 0; newChats.length; i++) {
-          if (
-            ((newChats[i].recipient_id === recipient_id ||
-              newChats[i].recipient_id === sender.id) &&
-              !is_group) ||
-            (is_group && newChats[i].recipient_id === recipient_id)
-          ) {
-            newChats[i].messages.push({
-              id: newChats[i].messages.length + 1,
-              recipient_id: recipient_id,
-              sender_id: sender_id,
-              sender_username:
-                sender_id === user!.id ? user!.username : sender.username,
-              encrypted_message: decryptedMessage,
-              sender_encrypted_message: decryptedMessage,
-              timestamp: new Date(),
-            });
-
+          if (newChats[i].is_group === is_group) {
             if (
-              ((currentChatRef.current?.recipient_id === sender_id ||
-                currentChatRef.current?.recipient_id === recipient_id) &&
+              ((newChats[i].recipient_id === recipient_id ||
+                newChats[i].recipient_id === sender.id) &&
                 !is_group) ||
-              (is_group &&
-                currentChatRef.current?.recipient_id === recipient_id)
+              (is_group && newChats[i].recipient_id === recipient_id)
             ) {
-              changeCurrentChat(newChats[i]);
-            } else {
-              addToast(
-                decryptedMessage,
-                "notification",
-                newChats[i].recipient_username,
-              );
+              newChats[i].messages.push({
+                id: newChats[i].messages.length + 1,
+                recipient_id: recipient_id,
+                sender_id: sender_id,
+                sender_username:
+                  sender_id === user!.id ? user!.username : sender.username,
+                encrypted_message: decryptedMessage,
+                sender_encrypted_message: decryptedMessage,
+                timestamp: new Date(),
+              });
+
+              if (
+                ((currentChatRef.current?.recipient_id === sender_id ||
+                  currentChatRef.current?.recipient_id === recipient_id) &&
+                  !is_group) ||
+                (is_group &&
+                  currentChatRef.current?.recipient_id === recipient_id)
+              ) {
+                changeCurrentChat(newChats[i]);
+              } else {
+                addToast(
+                  decryptedMessage,
+                  "notification",
+                  newChats[i].recipient_username,
+                );
+              }
+              var aux = newChats[i];
+              newChats[i] = newChats[0];
+              newChats[0] = aux;
+              setChats([...newChats]);
+              return;
             }
-            var aux = newChats[i];
-            newChats[i] = newChats[0];
-            newChats[0] = aux;
-            setChats([...newChats]);
-            return;
           }
         }
         await addNewChat(decryptedMessage, sender_id, recipient_id, is_group);
