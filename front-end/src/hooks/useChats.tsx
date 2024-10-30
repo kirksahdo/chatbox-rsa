@@ -224,7 +224,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
         sender_message: string;
         group_id?: number;
       } = JSON.parse(event.data);
-      console.log("message:", message);
       addMessage(
         message.message,
         message.sender_message,
@@ -254,10 +253,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
-
-  useEffect(() => {
-    console.log(chats);
-  }, [chats]);
 
   return (
     <ChatContext.Provider value={{ chats, changeChats, addMessage }}>
