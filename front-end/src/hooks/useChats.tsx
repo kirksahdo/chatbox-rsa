@@ -212,7 +212,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
 
     const uniqueParam = Date.now(); // Gera um timestamp único
     const socket = new WebSocket(
-      `ws://127.0.0.1:3333/ws/${user.id}?token=${user.token}&t=${uniqueParam}`,
+      `ws://${process.env.REACT_APP_WS_URL}:${process.env.REACT_APP_WS_PORT}/ws/${user.id}?token=${user.token}&t=${uniqueParam}`,
     );
 
     socket.onopen = () => console.log("WebSocket connection established");

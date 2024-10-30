@@ -35,7 +35,7 @@ const Login = () => {
       login(user);
     } catch (err: any) {
       addToast(
-        err.response.data.detail ??
+        err.response?.data?.detail ??
           "Login error, contact some system administrator.",
         "danger",
       );
