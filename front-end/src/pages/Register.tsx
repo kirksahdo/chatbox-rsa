@@ -17,6 +17,7 @@ const Register: React.FC = () => {
   const navigate = useNavigate();
 
   const handleRegister = () => {
+    setIsLoading(true);
     if (username.trim().length === 0) {
       addToast("The username is required", "danger");
       return;
@@ -37,7 +38,6 @@ const Register: React.FC = () => {
   };
 
   const registerUser = async () => {
-    setIsLoading(true);
     try {
       const { publicKey, privateKey } = generateKeyPair();
       const encriptedPrivateKey = encryptPrivateKey(privateKey, password);

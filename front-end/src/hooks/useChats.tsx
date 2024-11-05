@@ -77,8 +77,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
           recipient_id: group.id,
           recipient_public_key: cryptedSessionKey,
           recipient_username: group.name,
-          // TODO: add profile group image
-          recipient_profile_image: "",
+          recipient_profile_image: group.profile_image,
           messages: [
             {
               id: 0,
@@ -90,7 +89,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
               timestamp: new Date(),
             },
           ],
-          is_group: false,
+          is_group: true,
         };
       } else {
         newChat = {
@@ -157,11 +156,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
 
         const newChats = [...chatsRef.current];
 
-        for (let i = 0; newChats.length; i++) {
+        for (let i = 0; i < newChats.length; i++) {
           if (newChats[i].is_group === is_group) {
             if (
               ((newChats[i].recipient_id === recipient_id ||
-                newChats[i].recipient_id === sender.id) &&
+                newChats[i].recipient_id === sender_id) &&
                 !is_group) ||
               (is_group && newChats[i].recipient_id === recipient_id)
             ) {

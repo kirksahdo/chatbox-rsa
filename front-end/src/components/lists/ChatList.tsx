@@ -18,7 +18,7 @@ const ChatList: React.FC<{ chats: Chat[] }> = ({ chats }) => {
   );
 
   return (
-    <div className="overflow-y-auto h-screen p-3 mb-9 pb-20">
+    <div className="overflow-y-auto h-screen p-3 mb-9 pb-28">
       {chats.length > 0 ? (
         chats.map((chat, i) => (
           <ChatCard
