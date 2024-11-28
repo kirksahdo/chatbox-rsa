@@ -1,4 +1,4 @@
-import { Chat, MessageRegister } from "../@types/chat";
+import { Chat, ConnectedClientsResult, MessageRegister } from "../@types/chat";
 import api from "../services/api";
 
 export default abstract class ChatController {
@@ -15,5 +15,13 @@ export default abstract class ChatController {
     await api.post("/messages", payload, {
       headers: { Authorization: `Bearer ${token}` },
     });
+  }
+
+  static async getConnectedClients() {
+    const token = localStorage.getItem("token");
+    const result = await api.get<number[]>("/connected_clients/", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return result.data;
   }
 }

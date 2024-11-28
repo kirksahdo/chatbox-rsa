@@ -21,7 +21,17 @@ const ChatCard: React.FC<{
         className="w-12 h-12 rounded-full mr-3"
       />
       <div className="w-full">
-        <h2 className="text-lg font-semibold">{chat.recipient_username}</h2>
+        <div className="flex gap-1 items-center">
+          {chat.is_group === false && (
+            <span
+              className={clsx(
+                "w-3 h-3 rounded-full right-0 bottom-1",
+                chat.status === "online" ? "bg-green-600" : "bg-gray-300",
+              )}
+            ></span>
+          )}
+          <h2 className="text-lg font-semibold">{chat.recipient_username}</h2>
+        </div>
         <p className="text-gray-600 truncate w-full max-w-full">
           {chat.messages.length > 0
             ? chat.messages.slice(-1)[0]?.encrypted_message

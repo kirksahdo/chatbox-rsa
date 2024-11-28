@@ -206,6 +206,15 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
     [user],
   );
 
+  const changeChatsStatus = (userId: number, status: string) => {
+    const chats = [...chatsRef.current];
+    const chatIndex = chats.findIndex((chat) => chat.recipient_id === userId);
+    if (chatIndex !== -1) {
+      chats[chatIndex].status = status;
+    }
+    setChats([...chats]);
+  };
+
   useEffect(() => {
     if (!user) return;
 
@@ -218,18 +227,26 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
     socket.onclose = () => console.log("WebSocket connection closed");
     socket.onmessage = (event) => {
       const message: {
+        type: string;
         sender_id: number;
         message: string;
         sender_message: string;
         group_id?: number;
+        user_id?: number;
+        status?: string;
       } = JSON.parse(event.data);
-      addMessage(
-        message.message,
-        message.sender_message,
-        message.sender_id,
-        message.group_id ? message.group_id : user!.id,
-        !!message.group_id,
-      );
+      if (message.type === "status" && message.user_id && message.status) {
+        changeChatsStatus(message.user_id, message.status);
+        console.log(message.user_id!, message.status);
+      } else if (message.type === "message") {
+        addMessage(
+          message.message,
+          message.sender_message,
+          message.sender_id,
+          message.group_id ? message.group_id : user!.id,
+          !!message.group_id,
+        );
+      }
     };
     connection.current = socket;
   }, [user]);

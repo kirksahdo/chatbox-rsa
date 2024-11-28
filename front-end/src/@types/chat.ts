@@ -5,6 +5,7 @@ export interface Chat {
   recipient_profile_image: string;
   messages: Message[];
   is_group: boolean;
+  status?: string;
 }
 
 export interface Message {
@@ -38,4 +39,8 @@ export interface MessageRegister {
   recipient_id: number;
   sender_encrypted_message: string;
   encrypted_message: string;
+}
+
+export interface ConnectedClientsResult {
+  usersIds: number[];
 }

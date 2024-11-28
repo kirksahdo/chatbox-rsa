@@ -50,6 +50,7 @@ const ChatSideBar = () => {
   const getChats = async () => {
     try {
       setIsLoading(true);
+      const onlineClients = await ChatController.getConnectedClients();
       const result = await ChatController.get();
       const chats = result.map(async (chat) => {
         if (chat.is_group) {
@@ -74,6 +75,9 @@ const ChatSideBar = () => {
         }
         return {
           ...chat,
+          status: onlineClients.some((id) => chat.recipient_id === id)
+            ? "online"
+            : "offline",
           messages: chat.messages.map((message) => {
             const msg =
               user!.id === message.recipient_id

@@ -13,6 +13,7 @@ import {
 } from "../utils/crypto";
 import GroupController from "../controllers/GroupController";
 import ViewGroupModal from "./modals/ViewGroupModal";
+import clsx from "clsx";
 
 const ChatMain = () => {
   const { addMessage } = useChat();
@@ -137,9 +138,28 @@ const ChatMain = () => {
               src={currentChat?.recipient_profile_image}
               alt="Profile"
             />
-            <h1 className="text-2xl font-semibold">
-              {currentChat?.recipient_username}
-            </h1>
+            <div className="flex flex-col gap-1">
+              <div className="flex gap-1 items-center">
+                {currentChat.is_group === false && (
+                  <span
+                    className={clsx(
+                      "w-3 h-3 rounded-full right-0 bottom-1",
+                      currentChat.status === "online"
+                        ? "bg-green-600"
+                        : "bg-gray-300",
+                    )}
+                  ></span>
+                )}
+                <h1 className="text-2xl font-semibold">
+                  {currentChat?.recipient_username}
+                </h1>
+              </div>
+              {currentChat.is_group === false && (
+                <h2 className="text-xs font-normal text-gray-600">
+                  {currentChat?.status === "online" ? "Online" : "Offline"}
+                </h2>
+              )}
+            </div>
           </header>
 
           <div className="h-screen overflow-y-auto p-4" ref={messagesDivRef}>
