@@ -91,3 +91,20 @@ def get_group_by_id(
         profile_image=group.profile_image,
         users=[schemas.UserDTO.model_validate(user[1]) for user in users],
     )
+
+
+@router.get("/groups/messages/{group_id}")
+def get_messages(
+    group_id: int,
+    db: Session = Depends(get_db),
+    token: str = Depends(auth.decode_access_token),
+):
+    db_user_id = token["id"]
+
+    messages = (
+        db.query(models.GroupMessage)
+        .filter(models.GroupMessage.group_id == group_id)
+        .all()
+    )
+
+    return messages

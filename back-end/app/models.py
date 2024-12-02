@@ -37,6 +37,7 @@ class Message(Base):
     recipient_id = Column(Integer, ForeignKey("users.id"))
     encrypted_message = Column(String)
     sender_encrypted_message = Column(String)
+    status = Column(String)
     timestamp = Column(DateTime, default=datetime.utcnow)
 
     sender = relationship(

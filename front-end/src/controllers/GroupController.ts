@@ -1,9 +1,11 @@
+import { Message } from "../@types/chat";
 import {
   CreateGroup,
   GetSessionKeyGroup,
   SendGroupMessage,
   GetGroupById,
   Group,
+  GetGroupMessagesById,
 } from "../@types/group";
 import api from "../services/api";
 
@@ -39,6 +41,17 @@ export default abstract class GroupController {
     const result = await api.get<Group>(`/groups/${payload.group_id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    return result.data;
+  }
+
+  static async getMessages(payload: GetGroupMessagesById): Promise<Message[]> {
+    const token = localStorage.getItem("token");
+    const result = await api.get<Message[]>(
+      `/groups/messages/${payload.group_id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
     return result.data;
   }
 }

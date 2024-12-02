@@ -54,6 +54,7 @@ def get_messages(
                 sender_username=message[1],
                 timestamp=message[0].timestamp,
                 message=message[0].encrypted_message,
+                status="",
             )
         )
 
@@ -80,6 +81,7 @@ def get_messages(
             models.Message.recipient_id,
             models.Message.encrypted_message,
             models.Message.sender_encrypted_message,
+            models.Message.status,
             sender_user.username.label("sender_username"),
         )
         .join(

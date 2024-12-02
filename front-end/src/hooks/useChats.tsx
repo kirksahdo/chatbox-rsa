@@ -18,6 +18,12 @@ import {
   decryptSessionKey,
 } from "../utils/crypto";
 import GroupController from "../controllers/GroupController";
+import ChatController from "../controllers/ChatController";
+import {
+  decriptChat,
+  decriptGroupMessages,
+  decriptMessages,
+} from "../utils/chats";
 
 const ChatContext = createContext<ChatContextType | null>(null);
 
@@ -49,12 +55,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
   }, [currentChat]);
 
   const addNewChat = useCallback(
-    async (
-      message: string,
-      sender_id: number,
-      recipient_id: number,
-      is_group: boolean,
-    ) => {
+    async (sender_id: number, recipient_id: number, is_group: boolean) => {
       const newChats = [...chatsRef.current];
       let newChat: Chat;
 
@@ -73,48 +74,37 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
         const cryptedSessionKey = await GroupController.getSessionKey({
           group_id: group.id,
         });
+        const decryptedSessionKey = decryptSessionKey(
+          cryptedSessionKey,
+          user!.encryptedPrivateKey,
+        );
+        const messages = await GroupController.getMessages({
+          group_id: group.id,
+        });
         newChat = {
           recipient_id: group.id,
           recipient_public_key: cryptedSessionKey,
           recipient_username: group.name,
           recipient_profile_image: group.profile_image,
-          messages: [
-            {
-              id: 0,
-              recipient_id: recipient_id,
-              sender_id: sender_id,
-              sender_username: sender.username,
-              encrypted_message: message,
-              sender_encrypted_message: message,
-              timestamp: new Date(),
-            },
-          ],
+          messages: decriptGroupMessages(messages, decryptedSessionKey),
           is_group: true,
         };
       } else {
+        const messages = await ChatController.getMessages({
+          user_id: sender_id !== user?.id ? sender_id : recipient_id,
+        });
         newChat = {
           recipient_id: sender.id,
           recipient_public_key: sender.public_key,
           recipient_username: sender.username,
           recipient_profile_image: sender.profile_image,
-          messages: [
-            {
-              id: 0,
-              recipient_id: recipient_id,
-              sender_id: sender_id,
-              sender_username:
-                sender_id === user!.id ? user!.username : sender.username,
-              encrypted_message: message,
-              sender_encrypted_message: message,
-              timestamp: new Date(),
-            },
-          ],
+          messages: decriptMessages(messages, user!),
           is_group: false,
         };
       }
 
       setChats([newChat, ...newChats]);
-      addToast(message, "notification", sender.username);
+      addToast("Message Received", "notification", sender.username);
     },
     [addToast, user],
   );
@@ -128,77 +118,49 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
       is_group: boolean,
     ) => {
       try {
-        const sender = await UserController.getUser({
-          id: is_group
-            ? sender_id
-            : sender_id !== user!.id
-            ? sender_id
-            : recipient_id,
-        });
-        let decryptedMessage = "";
-        if (is_group) {
-          const group = await GroupController.get({ group_id: recipient_id });
-          const cryptedSessionKey = await GroupController.getSessionKey({
-            group_id: group.id,
-          });
+        const recipient = is_group
+          ? recipient_id
+          : sender_id !== user?.id
+          ? sender_id
+          : recipient_id;
 
-          const decryptedSessionKey = decryptSessionKey(
-            cryptedSessionKey,
-            user!.encryptedPrivateKey,
-          );
-          decryptedMessage = decryptGroupMessage(message, decryptedSessionKey);
-        } else {
-          decryptedMessage =
-            recipient_id === user!.id
-              ? decryptMessage(message, user!.encryptedPrivateKey)
-              : decryptMessage(sender_message, user!.encryptedPrivateKey);
-        }
+        const chat = chatsRef.current.findIndex(
+          (chat) =>
+            chat.recipient_id === recipient && chat.is_group === is_group,
+        );
+        if (chat !== -1) {
+          let messages = [];
+          if (is_group) {
+            messages = await GroupController.getMessages({
+              group_id: recipient_id,
+            });
+            const cryptedSessionKey = await GroupController.getSessionKey({
+              group_id: recipient_id,
+            });
 
-        const newChats = [...chatsRef.current];
-
-        for (let i = 0; i < newChats.length; i++) {
-          if (newChats[i].is_group === is_group) {
-            if (
-              ((newChats[i].recipient_id === recipient_id ||
-                newChats[i].recipient_id === sender_id) &&
-                !is_group) ||
-              (is_group && newChats[i].recipient_id === recipient_id)
-            ) {
-              newChats[i].messages.push({
-                id: newChats[i].messages.length + 1,
-                recipient_id: recipient_id,
-                sender_id: sender_id,
-                sender_username:
-                  sender_id === user!.id ? user!.username : sender.username,
-                encrypted_message: decryptedMessage,
-                sender_encrypted_message: decryptedMessage,
-                timestamp: new Date(),
-              });
-
-              if (
-                ((currentChatRef.current?.recipient_id === sender_id ||
-                  currentChatRef.current?.recipient_id === recipient_id) &&
-                  !is_group) ||
-                (is_group &&
-                  currentChatRef.current?.recipient_id === recipient_id)
-              ) {
-                changeCurrentChat(newChats[i]);
-              } else {
-                addToast(
-                  decryptedMessage,
-                  "notification",
-                  newChats[i].recipient_username,
-                );
-              }
-              var aux = newChats[i];
-              newChats[i] = newChats[0];
-              newChats[0] = aux;
-              setChats([...newChats]);
-              return;
-            }
+            const decryptedSessionKey = decryptSessionKey(
+              cryptedSessionKey,
+              user!.encryptedPrivateKey,
+            );
+            chatsRef.current[chat].messages = decriptGroupMessages(
+              messages,
+              decryptedSessionKey,
+            );
+          } else {
+            messages = await ChatController.getMessages({
+              user_id: recipient,
+            });
+            chatsRef.current[chat].messages = decriptMessages(messages, user!);
           }
+
+          if (currentChatRef.current?.recipient_id === recipient) {
+            changeCurrentChat(chatsRef.current[chat]);
+          }
+          setChats([...chatsRef.current]);
+          return;
         }
-        await addNewChat(decryptedMessage, sender_id, recipient_id, is_group);
+
+        await addNewChat(sender_id, recipient_id, is_group);
       } catch (err) {
         console.error(err);
       }

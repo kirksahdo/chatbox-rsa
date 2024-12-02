@@ -82,11 +82,23 @@ async def send_message(
     if not recipient:
         raise HTTPException(status_code=404, detail="Recipient not found")
 
+    client_is_connected = (
+        len(
+            [
+                client["user_id"]
+                for client in connected_clients
+                if client["user_id"] == message.recipient_id
+            ]
+        )
+        > 0
+    )
+
     new_message = models.Message(
         sender_id=db_user.id,
         recipient_id=message.recipient_id,
         encrypted_message=message.encrypted_message,
         sender_encrypted_message=message.sender_encrypted_message,
+        status="received" if client_is_connected else "sent",
     )
 
     db.add(new_message)

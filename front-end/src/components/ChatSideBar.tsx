@@ -17,6 +17,7 @@ import {
 } from "../utils/crypto";
 import GroupController from "../controllers/GroupController";
 import { useLoading } from "../hooks/useLoading";
+import { decriptChat } from "../utils/chats";
 
 const ChatSideBar = () => {
   // Component States
@@ -52,48 +53,9 @@ const ChatSideBar = () => {
       setIsLoading(true);
       const onlineClients = await ChatController.getConnectedClients();
       const result = await ChatController.get();
-      const chats = result.map(async (chat) => {
-        if (chat.is_group) {
-          const encryptedSession = await GroupController.getSessionKey({
-            group_id: chat.recipient_id,
-          });
-          const decryptedSession = decryptSessionKey(
-            encryptedSession,
-            user!.encryptedPrivateKey,
-          );
-
-          return {
-            ...chat,
-            messages: chat.messages.map((message) => {
-              const msg = decryptGroupMessage(
-                message.encrypted_message,
-                decryptedSession,
-              );
-              return { ...message, encrypted_message: msg };
-            }),
-          };
-        }
-        return {
-          ...chat,
-          status: onlineClients.some((id) => chat.recipient_id === id)
-            ? "online"
-            : "offline",
-          messages: chat.messages.map((message) => {
-            const msg =
-              user!.id === message.recipient_id
-                ? decryptMessage(
-                    message.encrypted_message,
-                    user!.encryptedPrivateKey,
-                  )
-                : decryptMessage(
-                    message.sender_encrypted_message,
-                    user!.encryptedPrivateKey,
-                  );
-
-            return { ...message, encrypted_message: msg };
-          }),
-        };
-      });
+      const chats = result.map(
+        async (chat) => await decriptChat(chat, user!, onlineClients),
+      );
       const resultChats = await Promise.all(chats);
       changeChats([...resultChats]);
     } catch (err: any) {

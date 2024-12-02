@@ -56,6 +56,7 @@ class MessageDTO(BaseModel):
     recipient_id: Optional[int] = None
     sender_encrypted_message: Optional[str] = None
     timestamp: datetime
+    status: str
 
     model_config = ConfigDict(from_attributes=True)
 

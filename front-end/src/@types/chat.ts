@@ -16,6 +16,7 @@ export interface Message {
   encrypted_message: string;
   sender_encrypted_message: string;
   timestamp: Date;
+  status?: string;
 }
 
 export interface ChatContextType {
@@ -43,4 +44,8 @@ export interface MessageRegister {
 
 export interface ConnectedClientsResult {
   usersIds: number[];
+}
+
+export interface GetMessagesByUserId {
+  user_id: number;
 }
