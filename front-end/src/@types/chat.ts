@@ -23,11 +23,10 @@ export interface ChatContextType {
   chats: Chat[];
   changeChats: (chats: Chat[]) => void;
   addMessage: (
-    message: string,
-    sender_message: string,
     sender_id: number,
     recipient_id: number,
     is_group: boolean,
+    type: string,
   ) => Promise<void>;
 }
 
@@ -47,5 +46,9 @@ export interface ConnectedClientsResult {
 }
 
 export interface GetMessagesByUserId {
+  user_id: number;
+}
+
+export interface MessagesUpdate {
   user_id: number;
 }

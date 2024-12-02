@@ -86,11 +86,10 @@ const ChatMain = () => {
           });
         }
         await addMessage(
-          encryptedMessage,
-          senderEncryptedMessage,
           user!.id,
           recipient_id,
           currentChatRef.current.is_group,
+          "new_message",
         );
         addToast("Message sent!", "success");
         scrollToBottom();

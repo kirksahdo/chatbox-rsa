@@ -111,11 +111,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
 
   const addMessage = useCallback(
     async (
-      message: string,
-      sender_message: string,
       sender_id: number,
       recipient_id: number,
       is_group: boolean,
+      type: string,
     ) => {
       try {
         const recipient = is_group
@@ -154,6 +153,15 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
           }
 
           if (currentChatRef.current?.recipient_id === recipient) {
+            if (
+              recipient_id === user?.id &&
+              is_group === false &&
+              type === "new_message"
+            ) {
+              await ChatController.updateChatMessagesStatus({
+                user_id: recipient,
+              });
+            }
             changeCurrentChat(chatsRef.current[chat]);
           }
           setChats([...chatsRef.current]);
@@ -202,12 +210,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
         console.log(message.user_id!, message.status);
       } else if (message.type === "message") {
         addMessage(
-          message.message,
-          message.sender_message,
           message.sender_id,
           message.group_id ? message.group_id : user!.id,
           !!message.group_id,
+          "new_message",
         );
+      } else if (message.type === "message_status_update") {
+        console.log("Receving status update", message.sender_id);
+        addMessage(message.sender_id, user!.id, false, message.type);
       }
     };
     connection.current = socket;

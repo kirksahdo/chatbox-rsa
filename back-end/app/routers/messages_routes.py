@@ -183,3 +183,75 @@ async def send_group_message(
         )
 
     return {"msg": "Message sent"}
+
+
+@router.post("/messages/status")
+async def update_messages_status(
+    db: Session = Depends(get_db), token: str = Depends(auth.decode_access_token)
+):
+
+    user_id = token["id"]
+
+    messages = (
+        db.query(models.Message)
+        .filter(
+            and_(
+                models.Message.recipient_id == user_id, models.Message.status == "sent"
+            )
+        )
+        .all()
+    )
+
+    senders_ids = set()
+
+    for message in messages:
+        senders_ids.add(message.sender_id)
+        message.status = "received"
+
+    db.commit()
+
+    print(senders_ids)
+
+    for client in connected_clients:
+        if senders_ids.__contains__(client["user_id"]):
+            print(client["user_id"])
+            await client["socket"].send_json(
+                {"type": "message_status_update", "sender_id": user_id}
+            )
+
+    return {"msg": "Status updated successfully"}
+
+
+@router.post("/messages/status/{sender_id}")
+async def update_chat_messages_status(
+    sender_id: int,
+    db: Session = Depends(get_db),
+    token: str = Depends(auth.decode_access_token),
+):
+
+    user_id = token["id"]
+
+    messages = (
+        db.query(models.Message)
+        .filter(
+            and_(
+                models.Message.recipient_id == user_id,
+                models.Message.sender_id == sender_id,
+                models.Message.status != "read",
+            )
+        )
+        .all()
+    )
+
+    for message in messages:
+        message.status = "read"
+
+    db.commit()
+
+    for client in connected_clients:
+        if client["user_id"] == sender_id:
+            await client["socket"].send_json(
+                {"type": "message_status_update", "sender_id": user_id}
+            )
+
+    return {"msg": "Status updated successfully"}

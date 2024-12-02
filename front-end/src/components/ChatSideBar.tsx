@@ -57,6 +57,7 @@ const ChatSideBar = () => {
         async (chat) => await decriptChat(chat, user!, onlineClients),
       );
       const resultChats = await Promise.all(chats);
+      await ChatController.updateMessagesStatus();
       changeChats([...resultChats]);
     } catch (err: any) {
       addToast(err.message, "danger");

@@ -6,7 +6,7 @@ import MessageStatus from "../MessageStatus";
 const SendedMessageCard: React.FC<{ message: Message }> = ({ message }) => {
   return (
     <div className="flex justify-end mb-4">
-      <div className="flex max-w-96 flex-wrap bg-indigo-500 text-white rounded-lg p-3 items-end gap-2">
+      <div className="flex max-w-96 flex-wrap bg-purple-700 text-white rounded-lg p-3 items-end gap-2">
         <div className="flex flex-col">
           <h3 className="text-xs text-white font-bold">
             {" "}

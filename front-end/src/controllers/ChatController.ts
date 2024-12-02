@@ -3,6 +3,7 @@ import {
   GetMessagesByUserId,
   Message,
   MessageRegister,
+  MessagesUpdate,
 } from "../@types/chat";
 import api from "../services/api";
 
@@ -36,5 +37,27 @@ export default abstract class ChatController {
       headers: { Authorization: `Bearer ${token}` },
     });
     return result.data;
+  }
+
+  static async updateChatMessagesStatus(payload: MessagesUpdate) {
+    const token = localStorage.getItem("token");
+    await api.post(
+      `/messages/status/${payload.user_id}`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+  }
+
+  static async updateMessagesStatus() {
+    const token = localStorage.getItem("token");
+    await api.post(
+      "/messages/status",
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
   }
 }

@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { Chat } from "../../@types/chat";
 import { useCurrentChat } from "../../hooks/useCurrentChat";
 import ChatCard from "../cards/ChatCard";
+import ChatController from "../../controllers/ChatController";
 
 const ChatList: React.FC<{ chats: Chat[] }> = ({ chats }) => {
   const { currentChat, changeCurrentChat } = useCurrentChat();
@@ -13,9 +14,18 @@ const ChatList: React.FC<{ chats: Chat[] }> = ({ chats }) => {
         return;
       }
       changeCurrentChat(chats[index]);
+      updateChatMessagesStatus(chats[index].recipient_id);
     },
     [chats, currentChat],
   );
+
+  const updateChatMessagesStatus = async (user_id: number) => {
+    try {
+      await ChatController.updateChatMessagesStatus({ user_id });
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="overflow-y-auto h-screen p-3 mb-9 pb-28">
