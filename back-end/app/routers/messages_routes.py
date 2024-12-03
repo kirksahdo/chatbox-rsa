@@ -273,3 +273,20 @@ async def update_chat_messages_status(
             )
 
     return {"msg": "Status updated successfully"}
+
+
+@router.delete("/groups/user/{group_id}")
+def delete_user_from_group(
+    group_id: int,
+    db: Session = Depends(get_db),
+    token: str = Depends(auth.decode_access_token),
+):
+    user_id = token["id"]
+
+    db.query(models.GroupUser).filter(
+        and_(models.GroupUser.group_id == group_id, models.GroupUser.user_id == user_id)
+    ).delete()
+
+    db.commit()
+
+    return {"msg": "User deleted from group"}

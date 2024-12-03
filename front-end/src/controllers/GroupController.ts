@@ -6,6 +6,7 @@ import {
   GetGroupById,
   Group,
   GetGroupMessagesById,
+  DeleteUserGroupById,
 } from "../@types/group";
 import api from "../services/api";
 
@@ -48,6 +49,17 @@ export default abstract class GroupController {
     const token = localStorage.getItem("token");
     const result = await api.get<Message[]>(
       `/groups/messages/${payload.group_id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return result.data;
+  }
+
+  static async deleteUser(payload: DeleteUserGroupById) {
+    const token = localStorage.getItem("token");
+    const result = await api.delete<Message[]>(
+      `/groups/user/${payload.group_id}`,
       {
         headers: { Authorization: `Bearer ${token}` },
       },

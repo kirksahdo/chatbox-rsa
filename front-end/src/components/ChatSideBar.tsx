@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "../hooks/useToast";
 import SearchInput from "./inputs/SearchInput";
 import UsersList from "./lists/UsersList";
@@ -10,12 +10,6 @@ import ChatList from "./lists/ChatList";
 import { User } from "../@types/user";
 import { useChat } from "../hooks/useChats";
 import { useAuth } from "../hooks/useAuth";
-import {
-  decryptGroupMessage,
-  decryptMessage,
-  decryptSessionKey,
-} from "../utils/crypto";
-import GroupController from "../controllers/GroupController";
 import { useLoading } from "../hooks/useLoading";
 import { decriptChat } from "../utils/chats";
 
@@ -47,24 +41,7 @@ const ChatSideBar = () => {
   }, [mode]);
 
   // Chat List
-  const { chats, changeChats } = useChat();
-  const getChats = async () => {
-    try {
-      setIsLoading(true);
-      const onlineClients = await ChatController.getConnectedClients();
-      const result = await ChatController.get();
-      const chats = result.map(
-        async (chat) => await decriptChat(chat, user!, onlineClients),
-      );
-      const resultChats = await Promise.all(chats);
-      await ChatController.updateMessagesStatus();
-      changeChats([...resultChats]);
-    } catch (err: any) {
-      addToast(err.message, "danger");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { chats, getChats } = useChat();
 
   useEffect(() => {
     getChats();

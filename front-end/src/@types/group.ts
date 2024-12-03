@@ -22,6 +22,8 @@ export interface GetGroupById extends GetSessionKeyGroup {}
 
 export interface GetGroupMessagesById extends GetSessionKeyGroup {}
 
+export interface DeleteUserGroupById extends GetSessionKeyGroup {}
+
 export interface Group {
   id: number;
   name: string;

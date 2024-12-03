@@ -28,6 +28,7 @@ export interface ChatContextType {
     is_group: boolean,
     type: string,
   ) => Promise<void>;
+  getChats: () => Promise<void>;
 }
 
 export interface CurrentChatContextType {

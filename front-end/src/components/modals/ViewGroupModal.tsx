@@ -5,6 +5,8 @@ import { Group } from "../../@types/group";
 import GroupController from "../../controllers/GroupController";
 import { useCurrentChat } from "../../hooks/useCurrentChat";
 import UserCard from "../cards/UserCard";
+import { useChat } from "../../hooks/useChats";
+import { useToast } from "../../hooks/useToast";
 
 interface ModalProps {
   isOpen: boolean;
@@ -14,13 +16,15 @@ interface ModalProps {
 const ViewGroupModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
   // Component States
   const [group, setGroup] = useState<Group>();
-  const { currentChat } = useCurrentChat();
+  const { currentChat, changeCurrentChat } = useCurrentChat();
 
   // Component Refs
   const currentChatRef = useRef(currentChat);
 
   // Global Contexts
   const { setIsLoading } = useLoading();
+  const { getChats } = useChat();
+  const { addToast } = useToast();
 
   // Update Current Chat Ref
   useEffect(() => {
@@ -40,6 +44,24 @@ const ViewGroupModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  // Exit from group
+  const deleteUserFromGroup = async () => {
+    setIsLoading(true);
+    try {
+      const group_id = currentChatRef.current!.recipient_id;
+      await GroupController.deleteUser({ group_id });
+      await getChats();
+      changeCurrentChat(undefined);
+      addToast("Exit from group successfully", "success");
+      onClose();
+    } catch (error) {
+      addToast("Error while exiting from group", "danger");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Get users when component did mount
   useEffect(() => {
     getGroup();
@@ -53,6 +75,8 @@ const ViewGroupModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
       onClose={onClose}
       primaryLabel="Close"
       onPrimaryClick={onClose}
+      secondaryLabel="Exit"
+      onSecondaryClick={deleteUserFromGroup}
     >
       <div className="w-96 flex flex-col h-96 items-center border border-solid rounded-2xl border-gray-500 p-5 gap-4">
         <img

@@ -12,11 +12,7 @@ import { useAuth } from "./useAuth";
 import { useCurrentChat } from "./useCurrentChat";
 import UserController from "../controllers/UserController";
 import { useToast } from "./useToast";
-import {
-  decryptGroupMessage,
-  decryptMessage,
-  decryptSessionKey,
-} from "../utils/crypto";
+import { decryptSessionKey } from "../utils/crypto";
 import GroupController from "../controllers/GroupController";
 import ChatController from "../controllers/ChatController";
 import {
@@ -24,6 +20,7 @@ import {
   decriptGroupMessages,
   decriptMessages,
 } from "../utils/chats";
+import { useLoading } from "./useLoading";
 
 const ChatContext = createContext<ChatContextType | null>(null);
 
@@ -43,6 +40,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
 
   const { user } = useAuth();
   const { addToast } = useToast();
+  const { setIsLoading } = useLoading();
 
   // Atualiza o valor do ref sempre que `chats` mudar
   useEffect(() => {
@@ -234,6 +232,24 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
     connection.current = socket;
   }, [user]);
 
+  const getChats = async () => {
+    try {
+      setIsLoading(true);
+      const onlineClients = await ChatController.getConnectedClients();
+      const result = await ChatController.get();
+      const chats = result.map(
+        async (chat) => await decriptChat(chat, user!, onlineClients),
+      );
+      const resultChats = await Promise.all(chats);
+      await ChatController.updateMessagesStatus();
+      changeChats([...resultChats]);
+    } catch (err: any) {
+      addToast(err.message, "danger");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const changeChats = (chats: Chat[]) => {
     setChats([...chats]);
   };
@@ -254,7 +270,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   return (
-    <ChatContext.Provider value={{ chats, changeChats, addMessage }}>
+    <ChatContext.Provider value={{ chats, changeChats, addMessage, getChats }}>
       {children}
     </ChatContext.Provider>
   );
