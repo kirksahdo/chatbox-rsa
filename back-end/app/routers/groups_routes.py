@@ -101,10 +101,28 @@ def get_messages(
 ):
     db_user_id = token["id"]
 
+    sender_user = aliased(models.User)
+
     messages = (
-        db.query(models.GroupMessage)
+        db.query(models.GroupMessage, sender_user.username.label("sender_username"))
+        .join(sender_user, models.GroupMessage.sender_id == sender_user.id)
         .filter(models.GroupMessage.group_id == group_id)
         .all()
     )
 
-    return messages
+    formatted_messages = [
+        {
+            "id": message[0].id,
+            "encrypted_message": message[0].encrypted_message,
+            "recipient_id": message[0].group_id,
+            "sender_encrypted_message": message[0].encrypted_message,
+            "sender_id": message[0].sender_id,
+            "sender_username": message[1],
+            "timestamp": message[0].timestamp,
+            "message": message[0].encrypted_message,
+            "status": "",
+        }
+        for message in messages
+    ]
+
+    return formatted_messages

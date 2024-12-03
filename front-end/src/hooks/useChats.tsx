@@ -104,7 +104,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       setChats([newChat, ...newChats]);
-      addToast("Message Received", "notification", sender.username);
+      addToast(
+        newChat.messages.at(-1)?.encrypted_message ?? "Message received",
+        "notification",
+        newChat.messages.at(-1)?.sender_username,
+      );
     },
     [addToast, user],
   );
@@ -163,6 +167,13 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
               });
             }
             changeCurrentChat(chatsRef.current[chat]);
+          } else if (type === "new_message") {
+            addToast(
+              chatsRef.current[chat].messages.at(-1)?.encrypted_message ??
+                "Message received",
+              "notification",
+              chatsRef.current[chat].messages.at(-1)?.sender_username,
+            );
           }
           setChats([...chatsRef.current]);
           return;

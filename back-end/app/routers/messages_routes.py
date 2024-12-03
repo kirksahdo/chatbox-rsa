@@ -123,8 +123,11 @@ def get_messages(
 ):
     db_user_id = token["id"]
 
+    sender_user = aliased(models.User)
+
     messages = (
-        db.query(models.Message)
+        db.query(models.Message, sender_user.username.label("sender_username"))
+        .join(sender_user, models.Message.sender_id == sender_user.id)
         .filter(
             or_(
                 and_(
@@ -140,7 +143,22 @@ def get_messages(
         .all()
     )
 
-    return messages
+    formatted_messages = [
+        {
+            "id": message[0].id,
+            "encrypted_message": message[0].encrypted_message,
+            "recipient_id": message[0].recipient_id,
+            "sender_encrypted_message": message[0].sender_encrypted_message,
+            "sender_id": message[0].sender_id,
+            "sender_username": message[1],
+            "timestamp": message[0].timestamp,
+            "message": message[0].encrypted_message,
+            "status": message[0].status,
+        }
+        for message in messages
+    ]
+
+    return formatted_messages
 
 
 @router.post("/groups/messages")

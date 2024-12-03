@@ -14,7 +14,8 @@ const ChatList: React.FC<{ chats: Chat[] }> = ({ chats }) => {
         return;
       }
       changeCurrentChat(chats[index]);
-      updateChatMessagesStatus(chats[index].recipient_id);
+      if (chats[index].is_group === false)
+        updateChatMessagesStatus(chats[index].recipient_id);
     },
     [chats, currentChat],
   );
